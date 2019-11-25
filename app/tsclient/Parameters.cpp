@@ -31,6 +31,9 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("analyze-pattern,a",
            po::value<bool>(&analyze_)->implicit_value(true),
            "enable/disable pattern check");
+  desc_add("unpack,u",
+           po::value<bool>(&unpack_)->implicit_value(true),
+           "enable/disable unpacking");
   desc_add("benchmark,b", po::value<bool>(&benchmark_)->implicit_value(true),
            "run benchmark test only");
   desc_add("verbose,v", po::value<size_t>(&verbosity_), "set output verbosity");

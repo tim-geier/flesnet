@@ -10,7 +10,7 @@ target_compile_definitions(tsclient PUBLIC BOOST_ALL_DYN_LINK)
 target_include_directories(tsclient SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 
 target_link_libraries(tsclient
-  fles_ipc fles_core logging crcutil
+  fles_ipc fles_core logging crcutil unpacker
   ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
 )
 

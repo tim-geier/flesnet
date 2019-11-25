@@ -2,6 +2,7 @@
 
 #include "Application.hpp"
 #include "TimesliceAnalyzer.hpp"
+#include "TimesliceUnpacker.hpp"
 #include "TimesliceDebugger.hpp"
 #include "TimesliceInputArchive.hpp"
 #include "TimesliceOutputArchive.hpp"
@@ -31,6 +32,13 @@ Application::Application(Parameters const& par) : par_(par) {
     std::string output_prefix =
         boost::lexical_cast<std::string>(par_.client_index()) + ": ";
     sinks_.push_back(std::unique_ptr<fles::TimesliceSink>(new TimesliceAnalyzer(
+        1000, status_log_.stream, output_prefix, nullptr)));
+  }
+
+  if (par_.unpack()) {
+    std::string output_prefix =
+        boost::lexical_cast<std::string>(par_.client_index()) + ": ";
+    sinks_.push_back(std::unique_ptr<fles::TimesliceSink>(new TimesliceUnpacker(
         1000, status_log_.stream, output_prefix, nullptr)));
   }
 

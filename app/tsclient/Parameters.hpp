@@ -36,6 +36,8 @@ public:
 
   bool analyze() const { return analyze_; }
 
+  bool unpack() const { return unpack_; }
+
   bool benchmark() const { return benchmark_; }
 
   size_t verbosity() const { return verbosity_; }
@@ -63,6 +65,7 @@ private:
   size_t output_archive_items_ = SIZE_MAX;
   size_t output_archive_bytes_ = SIZE_MAX;
   bool analyze_ = false;
+  bool unpack_ = false;
   bool benchmark_ = false;
   size_t verbosity_ = 0;
   std::string publish_address_;
