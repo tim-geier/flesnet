@@ -131,10 +131,9 @@ class CbmTofDigiExp
           ** @brief Sorting using the time, assumes Digis are in same reference frame (e.g. same epoch).
           **/
 
-     virtual bool operator <( const CbmTofDigiExp& rhs) const; 
-     // virtual int	 Compare(      const TObject* obj) const;
-      virtual int	 Compare(      const CbmTofDigiExp*  obj) const;
-      virtual bool IsSortable() const { return true; };
+      bool operator <( const CbmTofDigiExp& rhs) const; 
+      int	 Compare(      const CbmTofDigiExp*  obj) const;
+      bool IsSortable() const { return true; };
 
       /** Modifiers **/
       void SetAddress(int address) { fuAddress = address; };
@@ -145,19 +144,11 @@ class CbmTofDigiExp
 
       std::string ToString() const;
 
-/*
-      CbmMatch* GetMatch() const { return fMatch; }
-
-      void SetMatch(CbmMatch* match) { fMatch = match; }
-*/
-
-
    
    private:
       double fdTime;    ///< Absolute time [ps]
       double fdTot;     ///< Tot [ps]
       unsigned int   fuAddress; ///< Unique channel address
-     // CbmMatch* fMatch;   ///< Match to MC
 
       friend class boost::serialization::access;
 
@@ -168,7 +159,6 @@ class CbmTofDigiExp
         ar& fdTime;
         ar& fdTot;
       }
-      
-  // ClassDef(CbmTofDigiExp, 1);
+
 };
 #endif // CBMTOFDIGIEXP_H

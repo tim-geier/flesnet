@@ -6,8 +6,6 @@
  **/
 #include "CbmTofDigiExp.hpp"
 
-// ROOT Headers
-//#include "TString.h"
 
 CbmTofDigiExp::CbmTofDigiExp() 
     : fdTime(0.),
@@ -93,8 +91,9 @@ CbmTofDigiExp::~CbmTofDigiExp() {
 
 std::string CbmTofDigiExp::ToString() const
 {
-   char buff[80];
+   char buff[100];
    sprintf(buff, "CbmTofDigi: address = 0x%08X time = %7f tot = %7f", GetAddress(), GetTime(), GetTot());
+   //sprintf(buff, "a=0x%08X t=%8f v=%8f", GetAddress(), GetTime(), GetTot());
    return buff;
 }
 
@@ -102,11 +101,7 @@ bool  CbmTofDigiExp::operator <( const CbmTofDigiExp& rhs) const
 {
    return (this->GetTime() < rhs.GetTime()) ? true : false;
 } 
-/*
-int	  CbmTofDigiExp::Compare(      const object* obj) const
-{
-   return Compare( (CbmTofDigiExp*)  obj);
-}*/
+
 int	  CbmTofDigiExp::Compare(      const CbmTofDigiExp*  obj) const
 {
    if( this->GetTime() < obj->GetTime() )

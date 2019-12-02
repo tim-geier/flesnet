@@ -19,3 +19,8 @@ if(USE_NUMA AND NUMA_FOUND)
   target_compile_definitions(unpacker PRIVATE HAVE_NUMA)
   target_link_libraries(unpacker PRIVATE ${NUMA_LIBRARY})
 endif()
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(unpacker PUBLIC OpenMP::OpenMP_CXX)
+endif()

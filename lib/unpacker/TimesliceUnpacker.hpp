@@ -4,7 +4,7 @@
 #include "MicrosliceDescriptor.hpp"
 #include "Sink.hpp"
 #include "Timeslice.hpp"
-#include "interface.h" // crcutil_interface
+//#include "interface.h" // crcutil_interface
 #include <memory>
 #include <ostream>
 #include <string>
@@ -14,8 +14,9 @@
 
 #include "gDpbMessv100.hpp"
 #include "CbmTofDigiExp.hpp"
+#include "TofUnpacker.hpp"
 
-class PatternChecker;
+
 
 class TimesliceUnpacker : public fles::TimesliceSink {
 public:
@@ -26,9 +27,9 @@ public:
   ~TimesliceUnpacker() override;
 
   void put(std::shared_ptr<const fles::Timeslice> timeslice) override;
+  bool process_timeslice(const fles::Timeslice& ts);
 
 private:
-  bool check_timeslice(const fles::Timeslice& ts);
 
   std::string statistics() const;
   void reset() {
@@ -36,20 +37,14 @@ private:
     content_bytes_ = 0;
   }
 
-  unsigned long long int current_epoch_cycle = 0;
-
-
-  std::map <unsigned int, unsigned int> mapping; // errors
-
   std::vector<CbmTofDigiExp> digiVect;
-
-  std::vector<fles::MicrosliceDescriptor> reference_descriptors_;
-  //std::vector<std::unique_ptr<PatternChecker>> pattern_checkers_;
 
   uint64_t output_interval_ = UINT64_MAX;
   std::ostream& out_;
   std::string output_prefix_;
   std::ostream* hist_;
+
+  TofUnpacker tofUnpacker;
 
   size_t timeslice_count_ = 0;
   size_t timeslice_error_count_ = 0;
