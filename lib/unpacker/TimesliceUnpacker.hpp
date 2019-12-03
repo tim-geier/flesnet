@@ -9,14 +9,12 @@
 #include <ostream>
 #include <string>
 // C/C++
-#include <vector>
 #include <map>
+#include <vector>
 
-#include "gDpbMessv100.hpp"
 #include "CbmTofDigiExp.hpp"
 #include "TofUnpacker.hpp"
-
-
+#include "gDpbMessv100.hpp"
 
 class TimesliceUnpacker : public fles::TimesliceSink {
 public:
@@ -30,7 +28,6 @@ public:
   bool process_timeslice(const fles::Timeslice& ts);
 
 private:
-
   std::string statistics() const;
   void reset() {
     microslice_count_ = 0;
