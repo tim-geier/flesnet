@@ -31,8 +31,7 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("analyze-pattern,a",
            po::value<bool>(&analyze_)->implicit_value(true),
            "enable/disable pattern check");
-  desc_add("unpack,u",
-           po::value<bool>(&unpack_)->implicit_value(true),
+  desc_add("unpack,u", po::value<bool>(&unpack_)->implicit_value(true),
            "enable/disable unpacking");
   desc_add("benchmark,b", po::value<bool>(&benchmark_)->implicit_value(true),
            "run benchmark test only");
@@ -60,9 +59,8 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("publish-hwm", po::value<uint32_t>(&publish_hwm_),
            "High-water mark for the publisher, in TS, TS drop happens if more "
            "buffered (default: 1)");
-  desc_add("subscribe,S",
-           po::value<std::string>(&subscribe_address_)
-               ->implicit_value("tcp://localhost:5556"),
+  desc_add("subscribe,S", po::value<std::string>(&subscribe_address_)
+                              ->implicit_value("tcp://localhost:5556"),
            "subscribe to timeslice publisher on given address");
   desc_add("subscribe-hwm", po::value<uint32_t>(&subscribe_hwm_),
            "High-water mark for the subscriber, in TS, TS drop happens if more "

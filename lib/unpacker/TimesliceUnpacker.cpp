@@ -6,13 +6,10 @@
 #include "gDpbMessv100.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <sstream>
+#include <chrono>
 
 #include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <thread>
 
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
@@ -31,6 +28,9 @@ TimesliceUnpacker::TimesliceUnpacker(uint64_t arg_output_interval,
 TimesliceUnpacker::~TimesliceUnpacker() {}
 
 bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
+  unsigned int input_data_size = 0;
+  unsigned int output_data_size = 0;
+  double processing_time_s = 0;
 
   if (ts.num_components() == 0) {
     out_ << "no component in timeslice " << ts.index() << std::endl;
@@ -42,9 +42,10 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   //#pragma omp parallel
   {
-    auto start2 = std::chrono::steady_clock::now();
+
     std::vector<CbmTofDigiExp>
         tmpDigiVect; // private Vector for each Process/Thread
+    auto start2 = std::chrono::steady_clock::now();
 #pragma omp for nowait
     for (size_t c = 0; c < ts.num_components(); ++c) {
       if (ts.get_microslice(c, 0).desc().sys_id != 0x60)
@@ -52,84 +53,60 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
       for (size_t s = 0; s < ts.num_microslices(c); ++s) {
         // Process MS
-        const uint64_t* data = reinterpret_cast<const uint64_t*>(
-            ts.get_microslice(c, s).content());
-        tofUnpacker.process_microslice(
-            data, ts.get_microslice(c, s).desc().size, &tmpDigiVect);
+
+        tofUnpacker.process_microslice(reinterpret_cast<const uint64_t*>(
+                                           ts.get_microslice(c, s).content()),
+                                       ts.get_microslice(c, s).desc().size,
+                                       &tmpDigiVect);
+        input_data_size += ts.get_microslice(c, s).desc().size;
       }
     }
     auto finish2 = std::chrono::steady_clock::now();
-    auto elapsed_seconds2 =
+    processing_time_s =
         std::chrono::duration_cast<std::chrono::duration<double>>(finish2 -
                                                                   start2)
             .count();
-    out_ << "processing took " << elapsed_seconds2 << " seconds" << std::endl;
 
 #pragma omp critical
     {
+      out_ << "processing took " << processing_time_s << " seconds"
+           << std::endl;
       if (!tmpDigiVect.empty()) {
-        auto start = std::chrono::steady_clock::now();
-        //    Merge slave into master
-        //    use move iterators instead, avoid copy unless
-        //    you want to use it for something else after this section
         digiVect.insert(digiVect.end(),
                         std::make_move_iterator(tmpDigiVect.begin()),
                         std::make_move_iterator(tmpDigiVect.end()));
 
         tmpDigiVect.clear();
-        auto finish = std::chrono::steady_clock::now();
-        auto elapsed_seconds =
-            std::chrono::duration_cast<std::chrono::duration<double>>(finish -
-                                                                      start)
-                .count();
-        out_ << "merging took " << elapsed_seconds << " seconds." << std::endl;
       }
     }
 
   } // end of parallel region
 
-  auto start = std::chrono::steady_clock::now();
-  std::sort(digiVect.begin(), digiVect.end());
-  auto finish = std::chrono::steady_clock::now();
-  double elapsed_seconds =
-      std::chrono::duration_cast<std::chrono::duration<double>>(finish - start)
-          .count();
-  out_ << "sorting took " << elapsed_seconds << " seconds." << std::endl;
+  // std::sort(digiVect.begin(), digiVect.end());
 
-  start = std::chrono::steady_clock::now();
+  output_data_size = digiVect.size() * sizeof(decltype(digiVect)::value_type);
+
   std::ofstream outFile;
   char filename[50];
   sprintf(filename, "ts_%lu.txt", ts.index());
   outFile.open(filename);
-
-  { // Boost version
+  {
     boost::archive::binary_oarchive oa(outFile);
-    oa& digiVect;
+    // oa& digiVect;
   }
-  /*
-    { // normal string representation
-      for (auto digi = digiVect.begin(); digi != digiVect.end(); ++digi)
-      {
-        outFile << digi->ToString() << "\n";
-      }
-    }
-  */
   outFile.close();
   digiVect.clear();
   timeslice_count_++;
 
-  finish = std::chrono::steady_clock::now();
-  elapsed_seconds =
-      std::chrono::duration_cast<std::chrono::duration<double>>(finish - start)
-          .count();
-  out_ << "Writing file took " << elapsed_seconds << " seconds." << std::endl;
+  out_ << "Input size:  " << input_data_size << " bytes." << std::endl;
+  out_ << "Output size: " << output_data_size << " bytes." << std::endl;
+  out_ << "Input rate:  "
+       << static_cast<int>(input_data_size / processing_time_s)
+       << " bytes/second" << std::endl;
+  out_ << "Output rate: "
+       << static_cast<int>(output_data_size / processing_time_s)
+       << " bytes/second" << std::endl;
 
-#ifdef DEBUG
-  out_ << "Dumping digiVect:" << std::endl;
-  for (unsigned int i = 0; i < digiVect.size(); i++) {
-    out_ << digiVect[i].ToString() << std::endl;
-  }
-#endif // DEBUG
   return true;
 }
 

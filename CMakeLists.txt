@@ -80,6 +80,7 @@ add_subdirectory(lib/flib_ipc)
 add_subdirectory(lib/fles_tools)
 add_subdirectory(lib/fles_zeromq)
 add_subdirectory(lib/unpacker)
+
 if (USE_RDMA AND RDMA_FOUND)
   add_subdirectory(lib/fles_rdma)
 endif()

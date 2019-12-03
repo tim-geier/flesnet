@@ -18,6 +18,7 @@ public:
   Parameters(int argc, char* argv[]) { parse_options(argc, argv); }
 
   Parameters(const Parameters&) = delete;
+
   void operator=(const Parameters&) = delete;
 
   int32_t client_index() const { return client_index_; }

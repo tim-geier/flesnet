@@ -16,12 +16,14 @@
 #include "gDpbMessv100.hpp"
 
 #include <map>
+#include <unordered_map>
 
 class TofUnpacker {
 private:
   std::ostream& out_;
-  std::map<unsigned int, unsigned int>
+  std::unordered_map<unsigned int, unsigned int>
       mapping; // Mapping (DPB, ASIC, channel) -> unique address
+               // using unordered_map gives better performance
 
 public:
   TofUnpacker(std::ostream& arg_out);

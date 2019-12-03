@@ -390,6 +390,6 @@ public:
                     unsigned kind = msg_print_Human) const;
 };
 
-} // gdpbv100
+} // namespace gdpbv100
 
 #endif // GDPB_MESS_V1_00_DEF_H
