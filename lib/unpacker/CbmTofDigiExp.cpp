@@ -8,7 +8,9 @@
 
 CbmTofDigiExp::CbmTofDigiExp() : fdTime(0.), fdTot(0), fuAddress(0) {}
 
-CbmTofDigiExp::CbmTofDigiExp(unsigned int address, double time, unsigned int tot)
+CbmTofDigiExp::CbmTofDigiExp(unsigned int address,
+                             double time,
+                             unsigned int tot)
     : fdTime(time), fdTot(tot), fuAddress(address) {}
 
 CbmTofDigiExp::CbmTofDigiExp(unsigned int Sm,
@@ -22,30 +24,6 @@ CbmTofDigiExp::CbmTofDigiExp(unsigned int Sm,
   fuAddress = CbmTofAddress::GetUniqueAddress(Sm, Rpc, Channel, Side, SmType);
 }
 
-// -----   Assignment operator  ----------- --------------------------------
-CbmTofDigiExp& CbmTofDigiExp::operator=(const CbmTofDigiExp& rhs) {
-  if (this != &rhs) {
-    // CbmDigi::operator=(rhs);
-    fdTime = rhs.fdTime;
-    fdTot = rhs.fdTot;
-    fuAddress = rhs.fuAddress;
-  }
-  return *this;
-}
-// -------------------------------------------------------------------------
-
-// -----   Move Assignment operator   --------------------------------------
-CbmTofDigiExp& CbmTofDigiExp::operator=(CbmTofDigiExp&& other) {
-  if (this != &other) {
-    // CbmDigi::operator=(std::forward<CbmTofDigiExp>(other));
-    fuAddress = other.fuAddress;
-    fdTime = other.fdTime;
-    fdTot = other.fdTot;
-  }
-  return *this;
-}
-// -------------------------------------------------------------------------
-
 std::string CbmTofDigiExp::ToString() const {
   char buff[100];
   sprintf(buff, "CbmTofDigi: address = 0x%08X time = %7f tot = %7d",
@@ -55,7 +33,7 @@ std::string CbmTofDigiExp::ToString() const {
 }
 
 bool CbmTofDigiExp::operator<(const CbmTofDigiExp& rhs) const {
-  return (this->GetTime() < rhs.GetTime()) ? true : false;
+  return this->GetTime() < rhs.GetTime();
 }
 
 int CbmTofDigiExp::Compare(const CbmTofDigiExp* obj) const {

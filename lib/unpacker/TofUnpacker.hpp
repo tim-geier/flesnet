@@ -1,3 +1,4 @@
+// Copyright 2019 Tim Geier <mail@tim-geier.de>
 #include <ostream>
 #include <string>
 // C/C++

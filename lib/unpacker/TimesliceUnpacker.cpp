@@ -41,88 +41,57 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   out_ << "Now unpacking TS " << ts.index() << std::endl;
 
-  //#pragma omp parallel
-  {
-    /*
-        std::vector<CbmTofDigiExp>
-            tmpDigiVect; // private Vector for each Process/Thread
-            */
-    auto start2 = std::chrono::steady_clock::now();
+  auto start2 = std::chrono::steady_clock::now();
 
-    // Allocate memory for Digi objects, before inserting objects
-    // speedup is huge so extra runtime for counting elements is negligible
-    for (size_t c = 0; c < ts.num_components(); ++c) {
-      if (ts.get_microslice(c, 0).desc().sys_id != 0x60)
-        continue; // Ignore everything not TOF
-      for (size_t s = 0; s < ts.num_microslices(c); ++s) {
-        tof_input_data_size += ts.get_microslice(c, s).desc().size;
-      }
+  // Allocate memory for Digi objects, before inserting objects
+  // speedup is huge so extra runtime for counting elements is negligible
+  for (size_t c = 0; c < ts.num_components(); ++c) {
+    if (ts.get_microslice(c, 0).desc().sys_id != 0x60)
+      continue; // Ignore everything not TOF
+    for (size_t s = 0; s < ts.num_microslices(c); ++s) {
+      tof_input_data_size += ts.get_microslice(c, s).desc().size;
     }
-    tof_input_data_size *=
-        1000; // Correct size for benchmark, multiple runs in outer loops
+  }
+  digiVect.reserve(tof_input_data_size / 8);
 
-    digiVect.reserve(tof_input_data_size / 8);
+  for (size_t c = 0; c < ts.num_components(); ++c) {
+    if (ts.get_microslice(c, 0).desc().sys_id != 0x60)
+      continue; // Ignore everything not TOF
 
-    //#pragma omp for nowait
-
-    for (size_t c = 0; c < ts.num_components(); ++c) {
-      if (ts.get_microslice(c, 0).desc().sys_id != 0x60)
-        continue; // Ignore everything not TOF
-
-      for (size_t s = 0; s < ts.num_microslices(c); ++s) {
-        // Process MS
-        // Loop multiple times over same microslice, gives better ratio
-        // between setup time and working time for benchmarks
-        for (size_t i = 0; i < 1000; i++) {
-          tofUnpacker.process_microslice(reinterpret_cast<const uint64_t*>(
-                                             ts.get_microslice(c, s).content()),
-                                         ts.get_microslice(c, s).desc().size,
-                                         ts.get_microslice(c, s).desc().eq_id,
-                                         &digiVect);
-        }
-      }
+    for (size_t s = 0; s < ts.num_microslices(c); ++s) {
+      // Process MS
+      tofUnpacker.process_microslice(
+          reinterpret_cast<const uint64_t*>(ts.get_microslice(c, s).content()),
+          ts.get_microslice(c, s).desc().size,
+          ts.get_microslice(c, s).desc().eq_id, &digiVect);
     }
+  }
 
-    auto finish2 = std::chrono::steady_clock::now();
-    processing_time_s =
-        std::chrono::duration_cast<std::chrono::duration<double>>(finish2 -
-                                                                  start2)
-            .count();
-    out_ << "Vector size allocated : " << tof_input_data_size / 8 << std::endl;
-    out_ << "Vector size used : " << digiVect.size() << std::endl;
-    /*
-        // Using lambda comparison makes sorting way faster
-        std::sort(digiVect.begin(), digiVect.end(),
-                  [](const CbmTofDigi& a, const CbmTofDigi& b) -> bool {
-                    return a.GetTime() < b.GetTime();
-                  });
-    */
-    //#pragma omp critical
-    {
-      out_ << "processing took " << processing_time_s << " seconds"
-           << std::endl;
-      /*
- if (!tmpDigiVect.empty()) {
-   digiVect.insert(digiVect.end(),
-                   std::make_move_iterator(tmpDigiVect.begin()),
-                   std::make_move_iterator(tmpDigiVect.end()));
+  auto finish2 = std::chrono::steady_clock::now();
+  processing_time_s = std::chrono::duration_cast<std::chrono::duration<double>>(
+                          finish2 - start2)
+                          .count();
 
-   tmpDigiVect.clear();
- }
- */
-    }
+  out_ << "processing took " << processing_time_s << " seconds" << std::endl;
+  out_ << "Vector size allocated : " << tof_input_data_size / 8 << std::endl;
+  out_ << "Vector size used : " << digiVect.size() << std::endl;
+  out_ << "sorting..." << std::endl;
 
-  } // end of parallel region
+  // Using lambda comparison makes sorting way faster
+  std::sort(digiVect.begin(), digiVect.end(),
+            [](const CbmTofDigiExp& a, const CbmTofDigiExp& b) -> bool {
+              return a.GetTime() < b.GetTime();
+            });
 
   output_data_size = digiVect.size() * sizeof(decltype(digiVect)::value_type);
-
+  out_ << "writing to disk..." << std::endl;
   std::ofstream outFile;
   char filename[50];
   sprintf(filename, "ts_%lu.txt", ts.index());
   outFile.open(filename);
   {
     boost::archive::binary_oarchive oa(outFile);
-    // oa& digiVect;
+    oa& digiVect;
   }
   outFile.close();
   digiVect.clear();
@@ -130,8 +99,8 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   out_ << "Input size:  " << tof_input_data_size << " bytes." << std::endl;
   out_ << "Output size: " << output_data_size << " bytes." << std::endl;
-  out_ << "Input rate:  "
-       << static_cast<long int>(tof_input_data_size / processing_time_s)
+  out_ << "Input rate:  " << static_cast<unsigned long int>(
+                                 tof_input_data_size / processing_time_s)
        << " bytes/second" << std::endl;
 
   return true;

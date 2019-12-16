@@ -72,10 +72,10 @@ public:
   CbmTofDigiExp(CbmTofDigiExp&&) = default;
 
   /** Assignment operator  **/
-  CbmTofDigiExp& operator=(const CbmTofDigiExp&);
+  CbmTofDigiExp& operator=(const CbmTofDigiExp&) = default;
 
   /** Move Assignment operator  **/
-  CbmTofDigiExp& operator=(CbmTofDigiExp&&);
+  CbmTofDigiExp& operator=(CbmTofDigiExp&&) = default;
 
   /** Accessors **/
   /**
@@ -91,16 +91,16 @@ public:
   /**
    ** @brief Inherited from CbmDigi.
    **/
-  double GetTime() const { return fdTime; };
+  inline double GetTime() const { return fdTime; };
 
   /**
    ** @brief Inherited from CbmDigi.
    **/
-  double GetCharge() const { return fdTot; };
+  inline double GetCharge() const { return fdTot; };
   /**
    ** @brief Alias for GetCharge.
    **/
-  unsigned int GetTot() const { return GetCharge(); };
+  inline unsigned int GetTot() const { return GetCharge(); };
   /**
    ** @brief Sm.
    **/
@@ -149,7 +149,7 @@ public:
 
 private:
   double fdTime;          ///< Absolute time [ps]
-  unsigned int fdTot;           ///< Tot [ps]
+  unsigned int fdTot;     ///< Tot [ps]
   unsigned int fuAddress; ///< Unique channel address
 
   friend class boost::serialization::access;
