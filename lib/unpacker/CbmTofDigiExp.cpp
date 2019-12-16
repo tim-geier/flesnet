@@ -6,34 +6,22 @@
  **/
 #include "CbmTofDigiExp.hpp"
 
-CbmTofDigiExp::CbmTofDigiExp() : fdTime(0.), fdTot(-1.), fuAddress(0) {}
+CbmTofDigiExp::CbmTofDigiExp() : fdTime(0.), fdTot(0), fuAddress(0) {}
 
-CbmTofDigiExp::CbmTofDigiExp(unsigned int address, double time, double tot)
+CbmTofDigiExp::CbmTofDigiExp(unsigned int address, double time, unsigned int tot)
     : fdTime(time), fdTot(tot), fuAddress(address) {}
 
 CbmTofDigiExp::CbmTofDigiExp(unsigned int Sm,
                              unsigned int Rpc,
                              unsigned int Channel,
                              double time,
-                             double tot,
+                             unsigned int tot,
                              unsigned int Side,
                              unsigned int SmType)
     : fdTime(time), fdTot(tot), fuAddress(0) {
   fuAddress = CbmTofAddress::GetUniqueAddress(Sm, Rpc, Channel, Side, SmType);
 }
 
-// --- Copy constructor
-CbmTofDigiExp::CbmTofDigiExp(const CbmTofDigiExp& digiIn)
-    : fdTime(digiIn.fdTime), fdTot(digiIn.fdTot), fuAddress(digiIn.fuAddress) {}
-/*
-// -----   Move constructor  -----------------------------------------------
-CbmTofDigiExp::CbmTofDigiExp(CbmTofDigiExp&& other) {
-  fdTime = other.fdTime;
-  fdTot = other.fdTot;
-  fuAddress = other.fuAddress;
-}
-// -------------------------------------------------------------------------
-*/
 // -----   Assignment operator  ----------- --------------------------------
 CbmTofDigiExp& CbmTofDigiExp::operator=(const CbmTofDigiExp& rhs) {
   if (this != &rhs) {
@@ -60,7 +48,7 @@ CbmTofDigiExp& CbmTofDigiExp::operator=(CbmTofDigiExp&& other) {
 
 std::string CbmTofDigiExp::ToString() const {
   char buff[100];
-  sprintf(buff, "CbmTofDigi: address = 0x%08X time = %7f tot = %7f",
+  sprintf(buff, "CbmTofDigi: address = 0x%08X time = %7f tot = %7d",
           GetAddress(), GetTime(), GetTot());
   // sprintf(buff, "a=0x%08X t=%8f v=%8f", GetAddress(), GetTime(), GetTot());
   return buff;

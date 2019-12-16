@@ -42,7 +42,7 @@ public:
    ** @param[in] time    Absolute time [ps].
    ** @param[in] tot     Time Over Threshold [ps].
    **/
-  CbmTofDigiExp(unsigned int address, double time, double tot);
+  CbmTofDigiExp(unsigned int address, double time, unsigned int tot);
 
   /**
    ** @brief Constructor with detailled assignment.
@@ -59,14 +59,14 @@ public:
                 unsigned int Rpc,
                 unsigned int Channel,
                 double time,
-                double tot,
+                unsigned int tot,
                 unsigned int Side = 0,
                 unsigned int SmType = 0);
 
   /**
    ** @brief Copy constructor.
    **/
-  CbmTofDigiExp(const CbmTofDigiExp&);
+  CbmTofDigiExp(const CbmTofDigiExp&) = default;
 
   /** Move constructor  **/
   CbmTofDigiExp(CbmTofDigiExp&&) = default;
@@ -100,7 +100,7 @@ public:
   /**
    ** @brief Alias for GetCharge.
    **/
-  double GetTot() const { return GetCharge(); };
+  unsigned int GetTot() const { return GetCharge(); };
   /**
    ** @brief Sm.
    **/
@@ -143,13 +143,13 @@ public:
                   unsigned int Side = 0,
                   unsigned int SmType = 0);
   void SetTime(double time) { fdTime = time; };
-  void SetTot(double tot) { fdTot = tot; };
+  void SetTot(unsigned int tot) { fdTot = tot; };
 
   std::string ToString() const;
 
 private:
   double fdTime;          ///< Absolute time [ps]
-  double fdTot;           ///< Tot [ps]
+  unsigned int fdTot;           ///< Tot [ps]
   unsigned int fuAddress; ///< Unique channel address
 
   friend class boost::serialization::access;
