@@ -16,12 +16,11 @@
 #include "gDpbMessv100.hpp"
 
 #include <map>
-#include <unordered_map>
 
 class TofUnpacker {
 private:
   std::ostream& out_;
-  std::unordered_map<unsigned int, unsigned int>
+  std::map<unsigned short int, std::vector<unsigned int>>
       mapping; // Mapping (DPB, ASIC, channel) -> unique address
                // using unordered_map gives better performance
 
@@ -33,5 +32,6 @@ public:
 
   void process_microslice(const uint64_t* data,
                           const uint32_t ms_size,
+                          const unsigned short dbp_id,
                           std::vector<CbmTofDigiExp>* digiVect);
 };

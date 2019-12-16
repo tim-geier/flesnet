@@ -1,17 +1,19 @@
-/** CbmTofDigiExp.h
+/** CbmTofDigi.h
  ** @author Pierre-Alain Loizeau <loizeau@physi.uni-heidelberg.de>
  ** @date 07.06.2013
  **/
 
-/** @class CbmTofDigiExp
+/** @class CbmTofDigi
  ** @brief Data class for expanded digital TOF information
  ** @brief Data level: TDC CALIB
  ** @version 1.0
  **
- ** The information is encoded into 3*4 bytes (2 double + 1 unsigned int).
- ** Unique Address:                32 bits following CbmTofAddress
- ** Calibrated Time [ps]:          32 bits double
- ** Calibrated Tot  [ps]:          32 bits double
+ ** The information is encoded into 1*8 bytes (1 long long int).
+ ** Unique Address:                 32 bits following CbmTofAddress
+ ** Calibrated Time [T Digig Bin]:  22 bits with Bin Size defined as constant in
+ *this file
+ ** Calibrated Tot  [Tot Digi Bin]: 10 bits with Bin Size defined as constant in
+ *this file
  **
  ** In triggered setup, the time is relative to the trigger time, which
  ** is measured with a resolution of a few ns corresponding to the TDC
@@ -19,22 +21,20 @@
  ** In free-streaming setups, the time is relative to the last epoch.
  **/
 
-#ifndef CBMTOFDIGIEXP_H
-#define CBMTOFDIGIEXP_H 1
+#ifndef CBMTOFDIGI_H
+#define CBMTOFDIGI_H 1
 
 #include "CbmTofAddress.hpp"
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-
+class TString;
 #include <string>
 
-class CbmTofDigiExp {
+class CbmTofDigi {
 public:
   /**
    ** @brief Default constructor.
    **/
-  CbmTofDigiExp();
+  CbmTofDigi();
 
   /**
    ** @brief Constructor with assignment.
@@ -42,7 +42,7 @@ public:
    ** @param[in] time    Absolute time [ps].
    ** @param[in] tot     Time Over Threshold [ps].
    **/
-  CbmTofDigiExp(unsigned int address, double time, double tot);
+  CbmTofDigi(unsigned int address, double time, double tot);
 
   /**
    ** @brief Constructor with detailled assignment.
@@ -55,48 +55,40 @@ public:
    *CbmTofAddress)
    ** @param[in] Sm Type Super Module Type (optional). (cf CbmTofAddress)
    **/
-  CbmTofDigiExp(unsigned int Sm,
-                unsigned int Rpc,
-                unsigned int Channel,
-                double time,
-                double tot,
-                unsigned int Side = 0,
-                unsigned int SmType = 0);
-
-  /**
-   ** @brief Copy constructor.
-   **/
-  CbmTofDigiExp(const CbmTofDigiExp&);
-
-  /** Move constructor  **/
-  CbmTofDigiExp(CbmTofDigiExp&&) = default;
-
-  /** Assignment operator  **/
-  CbmTofDigiExp& operator=(const CbmTofDigiExp&);
-
-  /** Move Assignment operator  **/
-  CbmTofDigiExp& operator=(CbmTofDigiExp&&);
+  CbmTofDigi(unsigned int Sm,
+             unsigned int Rpc,
+             unsigned int Channel,
+             double time,
+             double tot,
+             unsigned int Side = 0,
+             unsigned int SmType = 0);
 
   /** Accessors **/
   /**
    ** @brief Inherited from CbmDigi.
    **/
-  int GetAddress() const { return fuAddress; };
+  int GetAddress() const {
+    return ((flData >> fgkiAddressOffs) & fgklAddrMask);
+  };
 
   /**
    ** @brief Inherited from CbmDigi.
    **/
-  int GetSystemId() const { return CbmTofAddress::GetSystemId(fuAddress); };
+  int GetSystemId() const { return CbmTofAddress::GetSystemId(GetAddress()); };
 
   /**
    ** @brief Inherited from CbmDigi.
    **/
-  double GetTime() const { return fdTime; };
+  double GetTime() const {
+    return fgkdTimeBinSize * ((flData >> fgkiTimeOffs) & fgklTimeMask);
+  };
 
   /**
    ** @brief Inherited from CbmDigi.
    **/
-  double GetCharge() const { return fdTot; };
+  double GetCharge() const {
+    return fgkdTotBinSize * ((flData >> fgkiTotOffs) & fgkiTotOffs);
+  };
   /**
    ** @brief Alias for GetCharge.
    **/
@@ -125,40 +117,56 @@ public:
   double GetSide() const {
     return CbmTofAddress::GetChannelSide(GetAddress());
   };
+  /**
+   ** @brief Full data acess.
+   **/
+  long long int GetData() const { return flData; };
 
   /**
    ** @brief Sorting using the time, assumes Digis are in same reference frame
    *(e.g. same epoch).
    **/
+  bool operator<(const CbmTofDigi& rhs) const;
 
-  bool operator<(const CbmTofDigiExp& rhs) const;
-  int Compare(const CbmTofDigiExp* obj) const;
+  int Compare(const CbmTofDigi* obj) const;
   bool IsSortable() const { return true; };
 
   /** Modifiers **/
-  void SetAddress(int address) { fuAddress = address; };
+  void SetAddress(unsigned int address);
   void SetAddress(unsigned int Sm,
                   unsigned int Rpc,
                   unsigned int Channel,
                   unsigned int Side = 0,
                   unsigned int SmType = 0);
-  void SetTime(double time) { fdTime = time; };
-  void SetTot(double tot) { fdTot = tot; };
+  void SetTime(double time);
+  void SetTot(double tot);
 
   std::string ToString() const;
 
 private:
-  double fdTime;          ///< Absolute time [ps]
-  double fdTot;           ///< Tot [ps]
-  unsigned int fuAddress; ///< Unique channel address
+  long long int flData; ///< Fully compressed data
 
-  friend class boost::serialization::access;
+  // -----   Bit fields sizes --------------------------------------------------
+  static const int fgkiAddressSize = 32;
+  static const int fgkiTimeSize = 22;
+  static const int fgkiTotSize = 10;
+  // -----------------------------------------------------------------------------
 
-  template <class Archive>
-  void serialize(Archive& ar, const unsigned int /*version*/) {
-    ar& fuAddress;
-    ar& fdTime;
-    ar& fdTot;
-  }
+  // -----   Bit masks
+  // -----------------------------------------------------------
+  static const long long int fgklAddrMask;
+  static const long long int fgklTimeMask;
+  static const long long int fgklTotMask;
+  // -----------------------------------------------------------------------------
+
+  // -----   Bit shifts --------------------------------------------------------
+  static const int fgkiAddressOffs;
+  static const int fgkiTimeOffs;
+  static const int fgkiTotOffs;
+  // -----------------------------------------------------------------------------
+
+  static const double
+      fgkdTimeBinSize; // [ps] => 41 943.40 ns ( > GET4 epoch, > trigger window)
+  static const double fgkdTotBinSize; // [ps] => 0-51.200 range
 };
-#endif // CBMTOFDIGIEXP_H
+#endif // CBMTOFDIGI_H

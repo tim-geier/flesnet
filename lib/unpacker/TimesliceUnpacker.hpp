@@ -12,7 +12,6 @@
 #include <map>
 #include <vector>
 
-#include "CbmTofDigiExp.hpp"
 #include "TofUnpacker.hpp"
 #include "gDpbMessv100.hpp"
 
@@ -33,8 +32,6 @@ private:
     microslice_count_ = 0;
     content_bytes_ = 0;
   }
-
-  std::vector<CbmTofDigiExp> digiVect;
 
   uint64_t output_interval_ = UINT64_MAX;
   std::ostream& out_;

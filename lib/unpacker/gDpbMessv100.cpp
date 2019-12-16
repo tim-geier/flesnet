@@ -60,6 +60,7 @@ bool gdpbv100::Message::operator!=(const gdpbv100::Message& other) const {
 uint64_t gdpbv100::Message::getMsgFullTime(uint64_t epoch) const {
   return std::round(getMsgFullTimeD(epoch));
 }
+/*
 //----------------------------------------------------------------------------
 //! Returns expanded and adjusted time of message in double (in ns)
 double gdpbv100::Message::getMsgFullTimeD(uint64_t epoch) const {
@@ -74,7 +75,7 @@ double gdpbv100::Message::getMsgFullTimeD(uint64_t epoch) const {
     else
       return (gdpbv100::kdEpochInNs * static_cast<double_t>(epoch) +
               static_cast<double_t>(getGdpbHitFullTs()) *
-                  gdpbv100::kdClockCycleSizeNs / gdpbv100::kdFtBinsNb);
+                  (gdpbv100::kdClockCycleSizeNs / gdpbv100::kdFtBinsNb));
   } // case MSG_HIT:
   case MSG_EPOCH:
     return gdpbv100::kdEpochInNs * static_cast<double_t>(getGdpbEpEpochNb());
@@ -92,6 +93,7 @@ double gdpbv100::Message::getMsgFullTimeD(uint64_t epoch) const {
   // If not already dealt with => unknown type
   return 0.0;
 }
+*/
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 //! Returns the time difference between two expanded time stamps

@@ -25,7 +25,7 @@ CbmTofDigiExp::CbmTofDigiExp(unsigned int Sm,
 // --- Copy constructor
 CbmTofDigiExp::CbmTofDigiExp(const CbmTofDigiExp& digiIn)
     : fdTime(digiIn.fdTime), fdTot(digiIn.fdTot), fuAddress(digiIn.fuAddress) {}
-
+/*
 // -----   Move constructor  -----------------------------------------------
 CbmTofDigiExp::CbmTofDigiExp(CbmTofDigiExp&& other) {
   fdTime = other.fdTime;
@@ -33,7 +33,7 @@ CbmTofDigiExp::CbmTofDigiExp(CbmTofDigiExp&& other) {
   fuAddress = other.fuAddress;
 }
 // -------------------------------------------------------------------------
-
+*/
 // -----   Assignment operator  ----------- --------------------------------
 CbmTofDigiExp& CbmTofDigiExp::operator=(const CbmTofDigiExp& rhs) {
   if (this != &rhs) {
@@ -57,8 +57,6 @@ CbmTofDigiExp& CbmTofDigiExp::operator=(CbmTofDigiExp&& other) {
   return *this;
 }
 // -------------------------------------------------------------------------
-
-CbmTofDigiExp::~CbmTofDigiExp() {}
 
 std::string CbmTofDigiExp::ToString() const {
   char buff[100];

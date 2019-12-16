@@ -6,53 +6,53 @@
 
 namespace gdpbv100 {
 // Size of one clock cycle (=1 coarse bin)
-const double kdClockCycleSize = 6250.0;                      //[ps]
-const double kdClockCycleSizeNs = kdClockCycleSize / 1000.0; //[ns]
+constexpr double kdClockCycleSize = 6250.0;                      //[ps]
+constexpr double kdClockCycleSizeNs = kdClockCycleSize / 1000.0; //[ns]
 // TODO:For now make 100ps default, maybe need later an option for it
-const double kdTotBinSize = 50.0; // ps
+constexpr double kdTotBinSize = 50.0; // ps
 
-const uint32_t kuFineTime = 0x0000007F;   // Fine Counter value
-const uint32_t kuFtShift = 0;             // Fine Counter offset
-const uint32_t kuCoarseTime = 0x0007FF80; // Coarse Counter value
-const uint32_t kuCtShift = 7;             // Coarse Counter offset
-const uint32_t kuCtSize = 12;             // Coarse Counter size in bits
+constexpr uint32_t kuFineTime = 0x0000007F;   // Fine Counter value
+constexpr uint32_t kuFtShift = 0;             // Fine Counter offset
+constexpr uint32_t kuCoarseTime = 0x0007FF80; // Coarse Counter value
+constexpr uint32_t kuCtShift = 7;             // Coarse Counter offset
+constexpr uint32_t kuCtSize = 12;             // Coarse Counter size in bits
 
-const uint32_t kuFineCounterSize = ((kuFineTime >> kuFtShift) + 1);
-const uint32_t kuCoarseCounterSize = ((kuCoarseTime >> kuCtShift) + 1);
-const uint32_t kuCoarseOverflowTest =
+constexpr uint32_t kuFineCounterSize = ((kuFineTime >> kuFtShift) + 1);
+constexpr uint32_t kuCoarseCounterSize = ((kuCoarseTime >> kuCtShift) + 1);
+constexpr uint32_t kuCoarseOverflowTest =
     kuCoarseCounterSize / 2; // Limit for overflow check
-const uint32_t kuTotCounterSize = 256;
+constexpr uint32_t kuTotCounterSize = 256;
 
-const double kdFtSize = kuFineCounterSize;
-const double kdFtBinsNb = 112.;
+constexpr double kdFtSize = kuFineCounterSize;
+constexpr double kdFtBinsNb = 112.;
 
 // Nominal bin size of NL are neglected
-const double kdBinSize =
+constexpr double kdBinSize =
     kdClockCycleSize / static_cast<double>(kuFineCounterSize);
 // Epoch Size in bins
-const uint32_t kuEpochInBins = kuFineTime + kuCoarseTime + 1;
+constexpr uint32_t kuEpochInBins = kuFineTime + kuCoarseTime + 1;
 // Epoch Size in ps
 // alternatively: (kiCoarseTime>>kiCtShift + 1)*kdClockCycleSize
-const double kdEpochInPs = static_cast<double>(kuEpochInBins) * kdBinSize;
-const double kdEpochInNs = kdEpochInPs / 1000.0;
+constexpr double kdEpochInPs = static_cast<double>(kuEpochInBins) * kdBinSize;
+constexpr double kdEpochInNs = kdEpochInPs / 1000.0;
 
 // Epoch counter size in epoch
-const uint32_t kuEpochCounterSz = 0x7FFFFFFF;
+constexpr uint32_t kuEpochCounterSz = 0x7FFFFFFF;
 // Epoch counter size in bin
-const uint64_t kulEpochCycleBins =
+constexpr uint64_t kulEpochCycleBins =
     static_cast<uint64_t>(kuEpochCounterSz + 1) * kuEpochInBins;
 // Epoch counter size in s
-const double kdEpochCycleInS =
+constexpr double kdEpochCycleInS =
     static_cast<double>(kuEpochCounterSz + 1) * (kdEpochInNs / 1e9);
 
 // Epoch Cycle MS start message size in bits
-const uint64_t kulEpochCycleFieldSz = 0x1FFFFF; // 21 bits
+constexpr uint64_t kulEpochCycleFieldSz = 0x1FFFFF; // 21 bits
 
-const uint32_t kuChipIdMergedEpoch = 255; // 0xFF
+constexpr uint32_t kuChipIdMergedEpoch = 255; // 0xFF
 
-const uint32_t kuFeePulserChannel =
+constexpr uint32_t kuFeePulserChannel =
     3; // Channel where a pulser can be set ON at 20 ns 500 Hz
-const uint32_t kuFeePulserChannelDiam =
+constexpr uint32_t kuFeePulserChannelDiam =
     0; // Channel where a pulser can be set ON at 20 ns 500 Hz
 
 enum MessageTypes {
@@ -142,7 +142,7 @@ public:
 
   Message(uint64_t dataIn) : data(dataIn) {}
 
-  virtual ~Message(){};
+  ~Message(){};
 
   void assign(const Message& src) { data = src.data; }
 
@@ -335,7 +335,14 @@ public:
 
   uint64_t getMsgFullTime(uint64_t epoch) const;
 
-  double getMsgFullTimeD(uint64_t epoch) const;
+  inline double getMsgFullTimeD(uint64_t epoch) const {
+    if (getMessageType() == MSG_HIT && !getGdpbHitIs24b()) {
+      return (gdpbv100::kdEpochInNs * static_cast<double>(epoch) +
+              static_cast<double>(getGdpbHitFullTs()) *
+                  (gdpbv100::kdClockCycleSizeNs / gdpbv100::kdFtBinsNb));
+    }
+    return 0.0;
+  }
 
   //! Expanded timestamp for 160 MHz * 19 bit (12 + 7) epochs
   inline static uint64_t FullTimeStamp(uint64_t epoch, uint32_t ts) {
