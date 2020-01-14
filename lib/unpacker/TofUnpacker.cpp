@@ -1,10 +1,14 @@
-// Copyright 2019 Tim Geier <mail@tim-geier.de>
+// Copyright 2019-2020 Tim Geier <mail@tim-geier.de>
 #include "TofUnpacker.hpp"
 
 #define BYTES_PER_MESSAGE 8
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+
+// workaround for missing EPOCH message at start of microslice
+// can be deleted as soon as hardware generates specification conform data...
+#define TOF_UNPACKER_USE_MISSING_EPOCH_QUIRKS_MODE
 
 TofUnpacker::TofUnpacker(std::ostream& arg_out) : out_(arg_out) {}
 
@@ -53,6 +57,7 @@ void TofUnpacker::process_microslice(const uint64_t* data,
                                      const uint32_t ms_size,
                                      const unsigned short dbp_id,
                                      std::vector<CbmTofDigiExp>* digiVect) {
+
   unsigned long long int current_epoch_cycle;
   unsigned long long int lastEpoch = 0;
   unsigned int errors = 0;
@@ -78,10 +83,34 @@ void TofUnpacker::process_microslice(const uint64_t* data,
       switch (mess->getMessageType()) {
       case gdpbv100::MSG_HIT: {
         if (lastEpoch == 0) {
+#ifdef TOF_UNPACKER_USE_MISSING_EPOCH_QUIRKS_MODE
+          if (i == 1)
+            continue;
+          // searches remaining messages for epoch information
+          for (size_t j = i + 1; j < (ms_size - (ms_size % BYTES_PER_MESSAGE)) /
+                                         BYTES_PER_MESSAGE;
+               j++) {
+            const gdpbv100::Message* tempMessage =
+                reinterpret_cast<const gdpbv100::Message*>(&data[j]);
+            if (tempMessage->isEpochMsg()) {
+              lastEpoch =
+                  (tempMessage->getGdpbEpEpochNb() - 1) +
+                  (gdpbv100::kuEpochCounterSz + 1) * current_epoch_cycle;
+              break;
+            }
+          }
+          if (lastEpoch == 0) {
+            // No Epoch in microslice
+            // Ignore current message and continue...
+            errors++;
+            break;
+          }
+#else
           // Missing Epoch information at start of microslice
           // Ignore current message and continue...
           errors++;
           break;
+#endif
         }
 
         unsigned int detectorAddress =
