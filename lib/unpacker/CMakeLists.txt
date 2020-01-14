@@ -3,6 +3,8 @@
 file(GLOB LIB_SOURCES *.cpp)
 file(GLOB LIB_HEADERS *.hpp)
 
+add_compile_options(-D_GLIBCXX_PARALLEL -march=x86-64)
+
 add_library(unpacker ${LIB_SOURCES} ${LIB_HEADERS})
 
 target_include_directories(unpacker PUBLIC .)
@@ -24,3 +26,4 @@ find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(unpacker PUBLIC OpenMP::OpenMP_CXX)
 endif()
+
