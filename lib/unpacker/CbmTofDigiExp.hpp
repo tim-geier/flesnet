@@ -132,6 +132,7 @@ public:
    **/
 
   bool operator<(const CbmTofDigiExp& rhs) const;
+  bool operator>=(const CbmTofDigiExp& rhs) const;
   int Compare(const CbmTofDigiExp* obj) const;
   bool IsSortable() const { return true; };
 

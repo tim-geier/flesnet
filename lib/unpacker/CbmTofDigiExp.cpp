@@ -26,14 +26,18 @@ CbmTofDigiExp::CbmTofDigiExp(unsigned int Sm,
 
 std::string CbmTofDigiExp::ToString() const {
   char buff[100];
-  sprintf(buff, "CbmTofDigi: address = 0x%08X time = %7f tot = %7d",
-          GetAddress(), GetTime(), GetTot());
+  sprintf(buff, "CbmTofDigi: address = 0x%08X time = %7f tot = %7f",
+          GetAddress(), GetTime(), (double)GetTot());
   // sprintf(buff, "a=0x%08X t=%8f v=%8f", GetAddress(), GetTime(), GetTot());
   return buff;
 }
 
 bool CbmTofDigiExp::operator<(const CbmTofDigiExp& rhs) const {
   return this->GetTime() < rhs.GetTime();
+}
+
+bool CbmTofDigiExp::operator>=(const CbmTofDigiExp& rhs) const {
+  return this->GetTime() >= rhs.GetTime();
 }
 
 int CbmTofDigiExp::Compare(const CbmTofDigiExp* obj) const {
