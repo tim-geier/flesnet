@@ -16,25 +16,24 @@ TofUnpacker::~TofUnpacker() {}
 
 bool TofUnpacker::load_mapping(std::string path) {
 
-  // DPB + ASIC + Channel wird im folgenden Format erwartet (32 Bit):
+  // DPB + ASIC + Channel schould be as following (32 Bit):
   // DPB      00001111111111111111000000000000
   // ASIC     00000000000000000000111111110000
-  // Channel  00000000000000000000000000001111  -- 4 Bit wegen besserer
-  // Lesbarkeit als HEX
+  // Channel  00000000000000000000000000001111
 
   // TODO:
-  // Channel auf 2 Bit ändern
+  // Change Channel to 2 Bit in mapping file
 
   out_ << "Reading mapping from file: " << path << std::endl;
-  std::ifstream paramFile;
-  paramFile.open(path);
-  if (!paramFile.good()) // File not found or not accessible
+  std::ifstream mappingFile;
+  mappingFile.open(path);
+  if (!mappingFile.good()) // File not found or not accessible
     return false;
 
   mapping.clear();
   unsigned int key, value;
   unsigned short int dpb = 0;
-  while (paramFile >> key >> value) {
+  while (mappingFile >> key >> value) {
     dpb = (key >> 12);
     auto it = mapping.find(dpb);
     if (it == mapping.end()) {
@@ -48,41 +47,44 @@ bool TofUnpacker::load_mapping(std::string path) {
     }
   }
 
-  paramFile.close();
+  mappingFile.close();
   out_ << "Finished reading mapping." << std::endl;
   return true;
 }
 
-void TofUnpacker::process_microslice(const uint64_t* data,
-                                     const uint32_t ms_size,
-                                     const unsigned short dbp_id,
+void TofUnpacker::process_microslice(fles::MicrosliceView ms,
                                      std::vector<CbmTofDigiExp>* digiVect) {
+
+  const uint64_t* ms_data = reinterpret_cast<const uint64_t*>(ms.content());
+  const uint32_t ms_size = ms.desc().size;
 
   unsigned long long int current_epoch_cycle;
   unsigned long long int lastEpoch = 0;
   unsigned int errors = 0;
 
-  auto it = mapping.find(dbp_id);
+  auto it = mapping.find(ms.desc().eq_id);
   if (unlikely(it == mapping.end())) {
     // DPB not found, something wrong with configuration...
     return;
   } else {
 
-    current_epoch_cycle =
-        data[0] & gdpbv100::kulEpochCycleFieldSz; // First MS = Epoch Cycle;
+    // First message in microslice = Epoch Cycle;
+    current_epoch_cycle = ms_data[0] & gdpbv100::kulEpochCycleFieldSz;
 
     // Loop over messages in microslice
     for (unsigned int i = 1;
          i < (ms_size - (ms_size % BYTES_PER_MESSAGE)) / BYTES_PER_MESSAGE;
          ++i) {
-
+      //	out_ << i << " " << std::hex << ms_data[i] << std::dec <<
+      // std::endl;
       // cast current data to message, doesn't need constructor call
       const gdpbv100::Message* mess =
-          reinterpret_cast<const gdpbv100::Message*>(&data[i]);
+          reinterpret_cast<const gdpbv100::Message*>(&ms_data[i]);
 
       switch (mess->getMessageType()) {
       case gdpbv100::MSG_HIT: {
         if (lastEpoch == 0) {
+
 #ifdef TOF_UNPACKER_USE_MISSING_EPOCH_QUIRKS_MODE
           if (i == 1)
             continue;
@@ -91,11 +93,13 @@ void TofUnpacker::process_microslice(const uint64_t* data,
                                          BYTES_PER_MESSAGE;
                j++) {
             const gdpbv100::Message* tempMessage =
-                reinterpret_cast<const gdpbv100::Message*>(&data[j]);
+                reinterpret_cast<const gdpbv100::Message*>(&ms_data[j]);
             if (tempMessage->isEpochMsg()) {
               lastEpoch =
                   (tempMessage->getGdpbEpEpochNb() - 1) +
                   (gdpbv100::kuEpochCounterSz + 1) * current_epoch_cycle;
+              //  out_ << "Missing EPOCH before message " << i
+              //  << " using EPOCH " << lastEpoch << std::endl;
               break;
             }
           }
@@ -119,6 +123,12 @@ void TofUnpacker::process_microslice(const uint64_t* data,
 
         if (detectorAddress == 0)
           continue; // Hit not mapped to digi
+
+        //        if (std::round(mess->getMsgFullTimeD(lastEpoch)) ==
+        //        179422254977)
+        //          out_ << mess->getMsgFullTimeD(lastEpoch) << " Epoch: " <<
+        //          lastEpoch << " Coarse " << mess->getGdpbHitCoarse() << "
+        //          Fine: " << mess->getGdpbHitFineTs() << std::endl;
 
         digiVect->emplace_back(detectorAddress,
                                mess->getMsgFullTimeD(lastEpoch),

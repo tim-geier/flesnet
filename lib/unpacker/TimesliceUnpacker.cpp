@@ -57,13 +57,10 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   for (size_t c = 0; c < ts.num_components(); ++c) {
     if (ts.get_microslice(c, 0).desc().sys_id != 0x60)
       continue; // Ignore everything not TOF
-    for (size_t s = 0; s < ts.num_microslices(c) - overlapms;
-         ++s) {
+    for (size_t s = 0; s < ts.num_microslices(c) - overlapms; ++s) {
       tof_input_data_size += ts.get_microslice(c, s).desc().size;
     }
   }
-
-  // tof_input_data_size *= 100;
 
   digiVect.reserve(tof_input_data_size / 8);
 
@@ -71,29 +68,16 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
     if (ts.get_microslice(c, 0).desc().sys_id != 0x60)
       continue; // Ignore everything not TOF
 
-    for (size_t s = 0; s < ts.num_microslices(c) - overlapms;
-         ++s) {
+    for (size_t s = 0; s < ts.num_microslices(c) - overlapms; ++s) {
       // Process MS
-      for (size_t i = 0; i < 1; i++) {
-        tofUnpacker.process_microslice(reinterpret_cast<const uint64_t*>(
-                                           ts.get_microslice(c, s).content()),
-                                       ts.get_microslice(c, s).desc().size,
-                                       ts.get_microslice(c, s).desc().eq_id,
-                                       &digiVect);
-      }
+      tofUnpacker.process_microslice(ts.get_microslice(c, s), &digiVect);
     }
     out_ << "Unpacked " << ts.num_microslices(c) - overlapms
          << " microslices..." << std::endl;
   }
 
-  out_ << "sorting..." << std::endl;
-
-  // Using lambda comparison makes sorting way faster
-  digiVect.shrink_to_fit();
-  std::sort(digiVect.begin(), digiVect.end(),
-            [](const CbmTofDigiExp& a, const CbmTofDigiExp& b) -> bool {
-              return a.GetTime() < b.GetTime();
-            });
+  // digiVect.shrink_to_fit();
+  // don't shrink, takes O(n) time; forever in case of 1000 TS
 
   auto finish2 = std::chrono::steady_clock::now();
   processing_time_s = std::chrono::duration_cast<std::chrono::duration<double>>(
@@ -104,24 +88,32 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   out_ << "Vector size allocated : " << tof_input_data_size / 8 << std::endl;
   out_ << "Vector size used : " << digiVect.size() << std::endl;
 
+  out_ << "sorting..." << std::endl;
+
+  // Using lambda comparison makes sorting way faster
+  std::sort(digiVect.begin(), digiVect.end()); //,
+  	  [](const CbmTofDigiExp& a, const CbmTofDigiExp& b) -> bool {
+  	  return a.GetTime() < b.GetTime();
+    });
+
   output_data_size = digiVect.size() * sizeof(decltype(digiVect)::value_type);
   out_ << "writing to disk..." << std::endl;
   std::ofstream outFile;
   char filename[50];
   sprintf(filename, "ts_%lu%s", ts.index(), OUTPUT_FILE_EXTENSION);
   outFile.open(filename);
-  /*
-    {
-      boost::archive::binary_oarchive oa(outFile);
-      // oa& digiVect;
-    }
-  */
+
+  {
+            boost::archive::binary_oarchive oa(outFile);
+       oa& digiVect;
+  }
+/*
   { // normal string representation
     for (auto digi = digiVect.begin(); digi != digiVect.end(); ++digi) {
       outFile << digi->ToString() << "\n";
     }
   }
-
+*/
   outFile.close();
   digiVect.clear();
   digiVect.shrink_to_fit();

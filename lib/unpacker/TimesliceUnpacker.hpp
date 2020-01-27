@@ -4,6 +4,7 @@
 #include "MicrosliceDescriptor.hpp"
 #include "Sink.hpp"
 #include "Timeslice.hpp"
+#include "MicrosliceView.hpp"
 //#include "interface.h" // crcutil_interface
 #include <memory>
 #include <ostream>
