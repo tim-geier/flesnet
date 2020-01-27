@@ -14,8 +14,8 @@
 #include <iostream>
 
 #include "CbmTofDigiExp.hpp"
-#include "gDpbMessv100.hpp"
 #include "MicrosliceView.hpp"
+#include "gDpbMessv100.hpp"
 
 #include <map>
 
@@ -31,5 +31,5 @@ public:
 
   bool load_mapping(std::string path);
   void process_microslice(fles::MicrosliceView ms,
-                                     std::vector<CbmTofDigiExp>* digiVect);
+                          std::vector<CbmTofDigiExp>* digiVect);
 };

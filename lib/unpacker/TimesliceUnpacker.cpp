@@ -91,10 +91,10 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   out_ << "sorting..." << std::endl;
 
   // Using lambda comparison makes sorting way faster
-  std::sort(digiVect.begin(), digiVect.end()); //,
-  	  [](const CbmTofDigiExp& a, const CbmTofDigiExp& b) -> bool {
-  	  return a.GetTime() < b.GetTime();
-    });
+  std::sort(digiVect.begin(), digiVect.end(),
+            [](const CbmTofDigiExp& a, const CbmTofDigiExp& b) -> bool {
+              return a.GetTime() < b.GetTime();
+            });
 
   output_data_size = digiVect.size() * sizeof(decltype(digiVect)::value_type);
   out_ << "writing to disk..." << std::endl;
@@ -104,16 +104,16 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   outFile.open(filename);
 
   {
-            boost::archive::binary_oarchive oa(outFile);
-       oa& digiVect;
+    boost::archive::binary_oarchive oa(outFile);
+    oa& digiVect;
   }
-/*
-  { // normal string representation
-    for (auto digi = digiVect.begin(); digi != digiVect.end(); ++digi) {
-      outFile << digi->ToString() << "\n";
+  /*
+    { // normal string representation
+      for (auto digi = digiVect.begin(); digi != digiVect.end(); ++digi)
+    { outFile << digi->ToString() << "\n";
+      }
     }
-  }
-*/
+  */
   outFile.close();
   digiVect.clear();
   digiVect.shrink_to_fit();
@@ -121,9 +121,8 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   out_ << "Input size:  " << tof_input_data_size << " bytes." << std::endl;
   out_ << "Output size: " << output_data_size << " bytes." << std::endl;
-  out_ << "Input rate:  "
-       << static_cast<unsigned long int>(tof_input_data_size /
-                                         processing_time_s)
+  out_ << "Input rate:  " << static_cast<unsigned long int>(
+                                 tof_input_data_size / processing_time_s)
        << " bytes/second" << std::endl;
 
   return true;
@@ -131,8 +130,7 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
 std::string TimesliceUnpacker::statistics() const {
   std::stringstream s;
-  s << "timeslices unpacked: " << timeslice_count_
-    << " ( avg"
+  s << "timeslices unpacked: " << timeslice_count_ << " ( avg"
     /*<< human_readable_count(content_bytes_) << " in " << microslice_count_*/
     << " microslices, avg: "
     << static_cast<double>(content_bytes_) / microslice_count_ << " bytes/ms)";
