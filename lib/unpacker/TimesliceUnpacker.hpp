@@ -34,6 +34,8 @@ private:
     content_bytes_ = 0;
   }
 
+  bool tofUnpacker_mapping_loaded = false;
+
   uint64_t output_interval_ = UINT64_MAX;
   std::ostream& out_;
   std::string output_prefix_;
