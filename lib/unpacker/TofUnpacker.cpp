@@ -14,6 +14,11 @@ TofUnpacker::TofUnpacker(std::ostream& arg_out) : out_(arg_out) {}
 
 TofUnpacker::~TofUnpacker() {}
 
+unsigned int TofUnpacker::get_errors() { return errors; }
+unsigned int TofUnpacker::get_unprocessed_messages() {
+  return unprocessed_messages;
+}
+
 bool TofUnpacker::load_mapping(std::string path) {
 
   // DPB + ASIC + Channel schould be as following (32 Bit):
@@ -28,7 +33,10 @@ bool TofUnpacker::load_mapping(std::string path) {
   std::ifstream mappingFile;
   mappingFile.open(path);
   if (!mappingFile.good()) // File not found or not accessible
+  {
+    mapping_loaded = false;
     return false;
+  }
 
   mapping.clear();
   unsigned int key, value;
@@ -49,6 +57,7 @@ bool TofUnpacker::load_mapping(std::string path) {
 
   mappingFile.close();
   out_ << "Finished reading mapping." << std::endl;
+  mapping_loaded = true;
   return true;
 }
 
@@ -60,7 +69,6 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
 
   unsigned long long int current_epoch_cycle;
   unsigned long long int lastEpoch = 0;
-  unsigned int errors = 0;
 
   auto it = mapping.find(ms.desc().eq_id);
   if (unlikely(it == mapping.end())) {
@@ -118,17 +126,11 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
         }
 
         unsigned int detectorAddress =
-            it->second[(mess->getGdpbGenChipId() << 2) +
+            it->second[(mess->getGdpbGenChipId() << 2) |
                        mess->getGdpbHitChanId()];
 
         if (detectorAddress == 0)
           continue; // Hit not mapped to digi
-
-        //        if (std::round(mess->getMsgFullTimeD(lastEpoch)) ==
-        //        179422254977)
-        //          out_ << mess->getMsgFullTimeD(lastEpoch) << " Epoch: " <<
-        //          lastEpoch << " Coarse " << mess->getGdpbHitCoarse() << "
-        //          Fine: " << mess->getGdpbHitFineTs() << std::endl;
 
         digiVect->emplace_back(detectorAddress,
                                mess->getMsgFullTimeD(lastEpoch),
@@ -141,15 +143,10 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
 
         break;
       }
-      case gdpbv100::MSG_SYST: {
-        // out_ << "SYST Message" << std::endl;
-
-        break;
-      }
       default: {
         // out_ << "Unbekannter Typ: " << mtMsgTyp << std::endl;
 
-        errors++;
+        unprocessed_messages++;
         break;
       }
       }

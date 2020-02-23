@@ -25,14 +25,13 @@ TimesliceUnpacker::TimesliceUnpacker(uint64_t arg_output_interval,
       output_prefix_(std::move(arg_output_prefix)), hist_(arg_hist),
       tofUnpacker(arg_out) {
 
-  tofUnpacker_mapping_loaded =
-      tofUnpacker.load_mapping("/home/geier/flesnet/build/mapping.par");
+  tofUnpacker.load_mapping("/home/geier/flesnet/build/mapping.par");
 }
 
 TimesliceUnpacker::~TimesliceUnpacker() {}
 
 bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
-  if (!tofUnpacker_mapping_loaded) {
+  if (!tofUnpacker.is_mapping_loaded()) {
     out_ << "TofUnpacker not ready, mapping not initialized!" << std::endl;
     out_ << "Not unpacking anything..." << std::endl;
     return false;
@@ -78,10 +77,12 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
     switch (ts.get_microslice(c, 0).desc().sys_id) {
     case 0x60: // 0x60 = Tof
     {
+
       for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
         tofUnpacker.process_microslice(ts.get_microslice(c, s),
                                        &tof_output_DigiVector);
       }
+
       break;
     }
     case 0x90: // 0x90 = T0, uses Tof unpacker due to similar data format
@@ -90,6 +91,7 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
         tofUnpacker.process_microslice(ts.get_microslice(c, s),
                                        &tof_output_DigiVector);
       }
+
       break;
     }
     default:
@@ -97,9 +99,6 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
       break;
     }
   }
-
-  // tof_output_DigiVector.shrink_to_fit();
-  // don't shrink, takes O(n) time; forever in case of 1000 TS
 
   auto finish2 = std::chrono::steady_clock::now();
   tof_processing_time_s =
@@ -109,12 +108,13 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   out_ << "processing took " << tof_processing_time_s << " seconds"
        << std::endl;
-  out_ << "Vector size allocated : " << tof_input_data_size / 8 << std::endl;
-  out_ << "Vector size used : " << tof_output_DigiVector.size() << std::endl;
+  out_ << "Vector size used : " << tof_output_DigiVector.size() << "/"
+       << (tof_input_data_size / 8) << std::endl;
 
-  out_ << "sorting..." << std::endl;
+  // tof_output_DigiVector.shrink_to_fit();
+  // don't shrink, takes O(n) time; forever in case of 1000 TS
 
-  // Using lambda comparison makes sorting way faster
+  // Using lambda comparison makes sorting faster
   std::sort(tof_output_DigiVector.begin(), tof_output_DigiVector.end(),
             [](const CbmTofDigiExp& a, const CbmTofDigiExp& b) -> bool {
               return a.GetTime() < b.GetTime();
@@ -122,7 +122,7 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   tof_output_data_size = tof_output_DigiVector.size() *
                          sizeof(decltype(tof_output_DigiVector)::value_type);
-  out_ << "writing to disk..." << std::endl;
+
   std::ofstream outFile;
   char filename[50];
   sprintf(filename, "ts_%lu%s", ts.index(), TOF_UNPACKER_OUTPUT_FILE_EXTENSION);
@@ -132,14 +132,7 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
     boost::archive::binary_oarchive oa(outFile);
     oa& tof_output_DigiVector;
   }
-  /*
-    { // normal string representation
-      for (auto digi = tof_output_DigiVector.begin(); digi !=
-    tof_output_DigiVector.end(); ++digi) { outFile << digi->ToString() <<
-    "\n";
-      }
-    }
-  */
+
   outFile.close();
   tof_output_DigiVector.clear();
   tof_output_DigiVector.shrink_to_fit();
@@ -147,18 +140,19 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   out_ << "Input size:  " << tof_input_data_size << " bytes." << std::endl;
   out_ << "Output size: " << tof_output_data_size << " bytes." << std::endl;
-  out_ << "Input rate:  "
-       << static_cast<unsigned long int>(tof_input_data_size /
-                                         tof_processing_time_s)
+  out_ << "Input rate:  " << static_cast<unsigned long int>(
+                                 tof_input_data_size / tof_processing_time_s)
        << " bytes/second" << std::endl;
+  out_ << "Errors: " << tofUnpacker.get_errors() << std::endl;
+  out_ << "Unprocessed messages; " << tofUnpacker.get_unprocessed_messages()
+       << std::endl;
 
   return true;
 }
 
 std::string TimesliceUnpacker::statistics() const {
   std::stringstream s;
-  s << "timeslices unpacked: " << timeslice_count_
-    << " ( avg"
+  s << "timeslices unpacked: " << timeslice_count_ << " ( avg"
     /*<< human_readable_count(content_bytes_) << " in " << microslice_count_*/
     << " microslices, avg: "
     << static_cast<double>(content_bytes_) / microslice_count_ << " bytes/ms)";

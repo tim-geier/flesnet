@@ -24,6 +24,9 @@ private:
   std::ostream& out_;
   std::map<unsigned short int, std::vector<unsigned int>>
       mapping; // Mapping (DPB, ASIC, channel) -> unique address
+  bool mapping_loaded = false;
+  unsigned int errors = 0;
+  unsigned int unprocessed_messages = 0;
 
 public:
   TofUnpacker(std::ostream& arg_out);
@@ -32,4 +35,9 @@ public:
   bool load_mapping(std::string path);
   void process_microslice(fles::MicrosliceView ms,
                           std::vector<CbmTofDigiExp>* digiVect);
+
+  bool is_mapping_loaded() { return mapping_loaded; };
+
+  unsigned int get_errors();
+  unsigned int get_unprocessed_messages();
 };
