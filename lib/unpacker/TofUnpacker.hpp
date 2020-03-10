@@ -16,6 +16,7 @@
 #include "CbmTofDigiExp.hpp"
 #include "MicrosliceView.hpp"
 #include "gDpbMessv100.hpp"
+#include "TofError.hpp"
 
 #include <map>
 
@@ -27,6 +28,7 @@ private:
   bool mapping_loaded = false;
   unsigned int errors = 0;
   unsigned int unprocessed_messages = 0;
+  std::vector<TofError> error_vector;
 
 public:
   TofUnpacker(std::ostream& arg_out);
@@ -40,4 +42,7 @@ public:
 
   unsigned int get_errors();
   unsigned int get_unprocessed_messages();
+  bool reset_error_counters();
+
+  std::vector<TofError> get_error_vector();
 };

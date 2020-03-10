@@ -42,7 +42,7 @@ public:
    ** @param[in] time    Absolute time [ps].
    ** @param[in] tot     Time Over Threshold [ps].
    **/
-  CbmTofDigiExp(unsigned int address, double time, unsigned int tot);
+  CbmTofDigiExp(unsigned int address, double time, unsigned short int tot);
 
   /**
    ** @brief Constructor with detailled assignment.
@@ -59,7 +59,7 @@ public:
                 unsigned int Rpc,
                 unsigned int Channel,
                 double time,
-                unsigned int tot,
+                unsigned short int tot,
                 unsigned int Side = 0,
                 unsigned int SmType = 0);
 
@@ -100,7 +100,7 @@ public:
   /**
    ** @brief Alias for GetCharge.
    **/
-  inline unsigned int GetTot() const { return GetCharge(); };
+  inline unsigned short int GetTot() const { return fdTot; };
   /**
    ** @brief Sm.
    **/
@@ -144,14 +144,14 @@ public:
                   unsigned int Side = 0,
                   unsigned int SmType = 0);
   void SetTime(double time) { fdTime = time; };
-  void SetTot(unsigned int tot) { fdTot = tot; };
+  void SetTot(unsigned short int tot) { fdTot = tot; };
 
   std::string ToString() const;
 
 private:
-  double fdTime;          ///< Absolute time [ps]
-  unsigned int fdTot;     ///< Tot [ps]
-  unsigned int fuAddress; ///< Unique channel address
+  double fdTime;            ///< Absolute time [ps]
+  unsigned short int fdTot; ///< Tot [ps]
+  unsigned int fuAddress;   ///< Unique channel address
 
   friend class boost::serialization::access;
 

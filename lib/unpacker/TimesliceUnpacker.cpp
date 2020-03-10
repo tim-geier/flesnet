@@ -147,6 +147,8 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   out_ << "Unprocessed messages; " << tofUnpacker.get_unprocessed_messages()
        << std::endl;
 
+  tofUnpacker.reset_error_counters();
+
   return true;
 }
 

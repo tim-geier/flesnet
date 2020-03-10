@@ -10,14 +10,14 @@ CbmTofDigiExp::CbmTofDigiExp() : fdTime(0.), fdTot(0), fuAddress(0) {}
 
 CbmTofDigiExp::CbmTofDigiExp(unsigned int address,
                              double time,
-                             unsigned int tot)
+                             unsigned short int tot)
     : fdTime(time), fdTot(tot), fuAddress(address) {}
 
 CbmTofDigiExp::CbmTofDigiExp(unsigned int Sm,
                              unsigned int Rpc,
                              unsigned int Channel,
                              double time,
-                             unsigned int tot,
+                             unsigned short int tot,
                              unsigned int Side,
                              unsigned int SmType)
     : fdTime(time), fdTot(tot), fuAddress(0) {
