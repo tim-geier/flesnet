@@ -187,8 +187,9 @@ void gdpbv100::Message::printData(unsigned outType,
   char buf[256];
   if (kind & msg_print_Hex) {
     const uint8_t* arr = reinterpret_cast<const uint8_t*>(&data);
-    snprintf(buf, sizeof(buf), "BE= %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X "
-                               "LE= %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X ",
+    snprintf(buf, sizeof(buf),
+             "BE= %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X "
+             "LE= %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X ",
              arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7],
              arr[7], arr[6], arr[5], arr[4], arr[3], arr[2], arr[1], arr[0]);
 
@@ -213,9 +214,10 @@ void gdpbv100::Message::printData(unsigned outType,
       else if (msg_print_File == outType)
         os << buf;
 
-      snprintf(buf, sizeof(buf), "EPOCH @%17.11f Get4:%2d Epoche2:%10u 0x%08x "
-                                 "Sync:%x Dataloss:%x Epochloss:%x "
-                                 "Epochmissmatch:%x",
+      snprintf(buf, sizeof(buf),
+               "EPOCH @%17.11f Get4:%2d Epoche2:%10u 0x%08x "
+               "Sync:%x Dataloss:%x Epochloss:%x "
+               "Epochmissmatch:%x",
                timeInSec, getGdpbGenChipId(), getGdpbEpEpochNb(),
                getGdpbEpEpochNb(), getGdpbEpSync(), getGdpbEpDataLoss(),
                getGdpbEpEpochLoss(), getGdpbEpMissmatch());
@@ -282,16 +284,18 @@ void gdpbv100::Message::printData(unsigned outType,
                  getGdpbHitFullTs());
       } // if( getGdpbHitIs24b() )
       else {
-        snprintf(buf, sizeof(buf), "Get4 32 bits, Get4:0x%04x Channel %1d "
-                                   "Ts:0x%03x Ft:0x%02x Tot:0x%02x  Dll %1d",
+        snprintf(buf, sizeof(buf),
+                 "Get4 32 bits, Get4:0x%04x Channel %1d "
+                 "Ts:0x%03x Ft:0x%02x Tot:0x%02x  Dll %1d",
                  getGdpbGenChipId(), getGdpbHitChanId(), getGdpbHitCoarse(),
                  getGdpbHitFineTs(), getGdpbHit32Tot(), getGdpbHit32DllLck());
       } // else of if( getGdpbHitIs24b() )
       break;
     } // case MSG_HIT:
     case MSG_EPOCH: {
-      snprintf(buf, sizeof(buf), "Get4:0x%04x Link: %1u Epoch:0x%08x Sync:%x "
-                                 "Dataloss:%x Epochloss:%x Epochmissmatch:%x",
+      snprintf(buf, sizeof(buf),
+               "Get4:0x%04x Link: %1u Epoch:0x%08x Sync:%x "
+               "Dataloss:%x Epochloss:%x Epochmissmatch:%x",
                getGdpbGenChipId(), getGdpbEpLinkId(), getGdpbEpEpochNb(),
                getGdpbEpSync(), getGdpbEpDataLoss(), getGdpbEpEpochLoss(),
                getGdpbEpMissmatch());
@@ -299,8 +303,9 @@ void gdpbv100::Message::printData(unsigned outType,
     } // case MSG_EPOCH:
     case MSG_SLOWC: {
       // GET4 slow control message, new "true" ROC support
-      snprintf(buf, sizeof(buf), "Get4 Slow control, Get4:0x%04x => Chan:%01d "
-                                 "Edge:%01d Type:%01x Data:0x%06x",
+      snprintf(buf, sizeof(buf),
+               "Get4 Slow control, Get4:0x%04x => Chan:%01d "
+               "Edge:%01d Type:%01x Data:0x%06x",
                getGdpbGenChipId(), 0x0, 0x0, 0x0, getGdpbSlcData());
       break;
     } // case MSG_SLOWC:
@@ -310,9 +315,10 @@ void gdpbv100::Message::printData(unsigned outType,
 
       switch (getGdpbSysSubType()) {
       case SYS_GET4_ERROR: {
-        snprintf(sysbuf, sizeof(sysbuf), "Get4:0x%04x Ch:0x%01x Edge:%01x "
-                                         "Unused:%06x ErrCode:0x%02x - GET4 V1 "
-                                         "Error Event",
+        snprintf(sysbuf, sizeof(sysbuf),
+                 "Get4:0x%04x Ch:0x%01x Edge:%01x "
+                 "Unused:%06x ErrCode:0x%02x - GET4 V1 "
+                 "Error Event",
                  getGdpbGenChipId(), getGdpbSysErrChanId(), getGdpbSysErrEdge(),
                  getGdpbSysErrUnused(), getGdpbSysErrData());
         break;

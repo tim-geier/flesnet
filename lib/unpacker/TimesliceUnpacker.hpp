@@ -21,7 +21,9 @@ public:
   TimesliceUnpacker(uint64_t arg_output_interval,
                     std::ostream& arg_out,
                     std::string arg_output_prefix,
-                    std::ostream* arg_hist);
+                    std::ostream* arg_hist,
+                    std::string output_filename,
+                    std::string mapping_file);
   ~TimesliceUnpacker() override;
 
   void put(std::shared_ptr<const fles::Timeslice> timeslice) override;
@@ -40,6 +42,8 @@ private:
   std::ostream* hist_;
 
   TofUnpacker tofUnpacker;
+  std::string output_filename_;
+  std::string mapping_file_;
 
   size_t timeslice_count_ = 0;
   size_t timeslice_error_count_ = 0;

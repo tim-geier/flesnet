@@ -16,15 +16,17 @@ void Parameters::parse_options(int argc, char* argv[]) {
   auto desc_add = desc.add_options();
   desc_add("version,V", "print version string");
   desc_add("help,h", "produce help message");
-  desc_add("log-level,l", po::value<unsigned>(&log_level)
-                              ->default_value(log_level)
-                              ->value_name("<n>"),
+  desc_add("log-level,l",
+           po::value<unsigned>(&log_level)
+               ->default_value(log_level)
+               ->value_name("<n>"),
            "set the file log level (all:0)");
   desc_add("log-file,L", po::value<std::string>(&log_file),
            "name of target log file");
-  desc_add("log-syslog,S", po::value<unsigned>(&log_syslog)
-                               ->default_value(log_syslog)
-                               ->value_name("<n>"),
+  desc_add("log-syslog,S",
+           po::value<unsigned>(&log_syslog)
+               ->default_value(log_syslog)
+               ->value_name("<n>"),
            "enable logging to syslog at given log level");
   desc_add("client-index,c", po::value<int32_t>(&client_index_),
            "index of this executable in the list of processor tasks");
@@ -33,6 +35,12 @@ void Parameters::parse_options(int argc, char* argv[]) {
            "enable/disable pattern check");
   desc_add("unpack,u", po::value<bool>(&unpack_)->implicit_value(true),
            "enable/disable unpacking");
+  desc_add("tof-unpacker-mapping",
+           po::value<std::string>(&tof_unpacker_mapping_),
+           "path to mapping file used for TOF address translation");
+  desc_add("tof-unpacker-output-filename",
+           po::value<std::string>(&tof_unpacker_output_filename_),
+           "output filename for TOF unpacker digi vector");
   desc_add("benchmark,b", po::value<bool>(&benchmark_)->implicit_value(true),
            "run benchmark test only");
   desc_add("verbose,v", po::value<size_t>(&verbosity_), "set output verbosity");
@@ -59,8 +67,9 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("publish-hwm", po::value<uint32_t>(&publish_hwm_),
            "High-water mark for the publisher, in TS, TS drop happens if more "
            "buffered (default: 1)");
-  desc_add("subscribe,S", po::value<std::string>(&subscribe_address_)
-                              ->implicit_value("tcp://localhost:5556"),
+  desc_add("subscribe,S",
+           po::value<std::string>(&subscribe_address_)
+               ->implicit_value("tcp://localhost:5556"),
            "subscribe to timeslice publisher on given address");
   desc_add("subscribe-hwm", po::value<uint32_t>(&subscribe_hwm_),
            "High-water mark for the subscriber, in TS, TS drop happens if more "
@@ -102,5 +111,25 @@ void Parameters::parse_options(int argc, char* argv[]) {
   }
   if (input_sources > 1) {
     throw ParametersException("more than one input source specified");
+  }
+
+  // if no mapping file parameter given fallback to mapping.par in CWD
+  if (vm.count("tof-unpacker-mapping") < 1) {
+    tof_unpacker_mapping_ = "mapping.par";
+  }
+
+  // fallback tof output filename
+  if (vm.count("tof-unpacker-output-filename") < 1) {
+    tof_unpacker_output_filename_ = input_archive_;
+    const size_t last_slash_idx =
+        tof_unpacker_output_filename_.find_last_of("\\/");
+    if (std::string::npos != last_slash_idx) {
+      tof_unpacker_output_filename_.erase(0, last_slash_idx + 1);
+    }
+    // Remove extension if present.
+    const size_t period_idx = tof_unpacker_output_filename_.rfind('.');
+    if (std::string::npos != period_idx) {
+      tof_unpacker_output_filename_.erase(period_idx);
+    }
   }
 }

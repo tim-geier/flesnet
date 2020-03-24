@@ -336,11 +336,14 @@ public:
   uint64_t getMsgFullTime(uint64_t epoch) const;
 
   inline double getMsgFullTimeD(uint64_t epoch) const {
-    if (getMessageType() == MSG_HIT && !getGdpbHitIs24b()) {
+    if (!(data & 0x8000000007) /*isHitMsg() && !getGdpbHitIs24b()*/) {
       return (gdpbv100::kdEpochInNs * static_cast<double>(epoch) +
               static_cast<double>(getGdpbHitFullTs()) *
                   (gdpbv100::kdClockCycleSizeNs / gdpbv100::kdFtBinsNb));
+    } else {
+      return gdpbv100::kdEpochInNs * static_cast<double>(epoch);
     }
+
     return 0.0;
   }
 

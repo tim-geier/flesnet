@@ -175,13 +175,13 @@ public:
 
   /** Number of bits for system Id in the address field
    ** @return Number of bits
-  **/
+   **/
   static int GetNofSystemBits() { return fgkSystemBits; }
 
   /** Get the system Id from the address
    ** @param address  Unique address
-  ** @return  systemId
-  **/
+   ** @return  systemId
+   **/
   static int GetSystemId(unsigned int address) {
     return address & ((1 << fgkSystemBits) - 1);
   }

@@ -20,12 +20,16 @@
 TimesliceUnpacker::TimesliceUnpacker(uint64_t arg_output_interval,
                                      std::ostream& arg_out,
                                      std::string arg_output_prefix,
-                                     std::ostream* arg_hist)
+                                     std::ostream* arg_hist,
+                                     std::string output_filename,
+                                     std::string mapping_file)
     : output_interval_(arg_output_interval), out_(arg_out),
       output_prefix_(std::move(arg_output_prefix)), hist_(arg_hist),
-      tofUnpacker(arg_out) {
+      tofUnpacker(arg_out), output_filename_(output_filename),
+      mapping_file_(mapping_file) {
 
-  tofUnpacker.load_mapping("/home/geier/flesnet/build/mapping.par");
+  tofUnpacker.load_mapping(mapping_file);
+  out_ << output_filename_ << std::endl;
 }
 
 TimesliceUnpacker::~TimesliceUnpacker() {}
@@ -124,8 +128,8 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
                          sizeof(decltype(tof_output_DigiVector)::value_type);
 
   std::ofstream outFile;
-  char filename[50];
-  sprintf(filename, "ts_%lu%s", ts.index(), TOF_UNPACKER_OUTPUT_FILE_EXTENSION);
+  std::string filename = output_filename_ + "_" + std::to_string(ts.index()) +
+                         TOF_UNPACKER_OUTPUT_FILE_EXTENSION;
   outFile.open(filename);
 
   {
@@ -140,8 +144,9 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   out_ << "Input size:  " << tof_input_data_size << " bytes." << std::endl;
   out_ << "Output size: " << tof_output_data_size << " bytes." << std::endl;
-  out_ << "Input rate:  " << static_cast<unsigned long int>(
-                                 tof_input_data_size / tof_processing_time_s)
+  out_ << "Input rate:  "
+       << static_cast<unsigned long int>(tof_input_data_size /
+                                         tof_processing_time_s)
        << " bytes/second" << std::endl;
   out_ << "Errors: " << tofUnpacker.get_errors() << std::endl;
   out_ << "Unprocessed messages; " << tofUnpacker.get_unprocessed_messages()
@@ -154,7 +159,8 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
 std::string TimesliceUnpacker::statistics() const {
   std::stringstream s;
-  s << "timeslices unpacked: " << timeslice_count_ << " ( avg"
+  s << "timeslices unpacked: " << timeslice_count_
+    << " ( avg"
     /*<< human_readable_count(content_bytes_) << " in " << microslice_count_*/
     << " microslices, avg: "
     << static_cast<double>(content_bytes_) / microslice_count_ << " bytes/ms)";
