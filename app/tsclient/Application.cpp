@@ -8,7 +8,7 @@
 #include "TimeslicePublisher.hpp"
 #include "TimesliceReceiver.hpp"
 #include "TimesliceSubscriber.hpp"
-#include "TimesliceUnpacker.hpp"
+
 #include "Utility.hpp"
 #include <boost/lexical_cast.hpp>
 #include <thread>
@@ -38,9 +38,11 @@ Application::Application(Parameters const& par) : par_(par) {
   if (par_.unpack()) {
     std::string output_prefix =
         boost::lexical_cast<std::string>(par_.client_index()) + ": ";
-    sinks_.push_back(std::unique_ptr<fles::TimesliceSink>(new TimesliceUnpacker(
+    timeslice_unpacker_ = new TimesliceUnpacker(
         1000, status_log_.stream, output_prefix, nullptr,
-        par_.tof_unpacker_output_filename(), par_.tof_unpacker_mapping())));
+        par_.tof_unpacker_output_filename(), par_.tof_unpacker_mapping());
+
+    sinks_.push_back(std::unique_ptr<fles::TimesliceSink>(timeslice_unpacker_));
   }
 
   if (par_.verbosity() > 0) {
@@ -122,4 +124,6 @@ void Application::run() {
       break;
     }
   }
+
+  timeslice_unpacker_->saveTofDigiVectorToDisk();
 }

@@ -27,6 +27,14 @@ public:
   ~TimesliceUnpacker() override;
 
   void put(std::shared_ptr<const fles::Timeslice> timeslice) override;
+  void saveTofDigiVectorToDisk();
+  std::vector<CbmTofDigiExp> getTofDigiVector() {
+    return tof_output_DigiVector_;
+  }
+  void clearTofDigiVector() {
+    tof_output_DigiVector_.clear();
+    tof_output_DigiVector_.shrink_to_fit();
+  }
   bool process_timeslice(const fles::Timeslice& ts);
 
 private:
@@ -41,9 +49,11 @@ private:
   std::string output_prefix_;
   std::ostream* hist_;
 
+  // Tof Unpacker
   TofUnpacker tofUnpacker;
   std::string output_filename_;
   std::string mapping_file_;
+  std::vector<CbmTofDigiExp> tof_output_DigiVector_;
 
   size_t timeslice_count_ = 0;
   size_t timeslice_error_count_ = 0;

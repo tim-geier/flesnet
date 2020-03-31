@@ -10,6 +10,8 @@
 #include <memory>
 #include <vector>
 
+#include "TimesliceUnpacker.hpp"
+
 /// %Application base class.
 class Application {
 public:
@@ -28,6 +30,8 @@ private:
   std::unique_ptr<fles::TimesliceSource> source_;
   std::vector<std::unique_ptr<fles::TimesliceSink>> sinks_;
   std::unique_ptr<Benchmark> benchmark_;
+
+  TimesliceUnpacker* timeslice_unpacker_;
 
   uint64_t count_ = 0;
 
