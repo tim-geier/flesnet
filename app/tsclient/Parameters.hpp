@@ -25,6 +25,8 @@ public:
 
   std::string shm_identifier() const { return shm_identifier_; }
 
+  bool multi_input() const { return multi_input_; }
+
   std::string input_archive() const { return input_archive_; }
 
   uint64_t input_archive_cycles() const { return input_archive_cycles_; }
@@ -49,6 +51,8 @@ public:
 
   size_t verbosity() const { return verbosity_; }
 
+  bool histograms() const { return histograms_; }
+
   std::string publish_address() const { return publish_address_; }
 
   uint32_t publish_hwm() const { return publish_hwm_; }
@@ -66,6 +70,7 @@ private:
 
   int32_t client_index_ = -1;
   std::string shm_identifier_;
+  bool multi_input_ = false;
   std::string input_archive_;
   uint64_t input_archive_cycles_ = 1;
   std::string output_archive_;
@@ -77,6 +82,7 @@ private:
   std::string tof_unpacker_mapping_;
   bool benchmark_ = false;
   size_t verbosity_ = 0;
+  bool histograms_ = false;
   std::string publish_address_;
   uint32_t publish_hwm_ = 1;
   std::string subscribe_address_;

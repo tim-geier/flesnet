@@ -199,7 +199,7 @@ def stop():
   rundir = os.path.join(rundir_base, str(run_id))
   os.chdir(rundir)
 
-  print("stoppig run with id", run_id)
+  print("stopping run with id", run_id)
   subprocess.call(["/usr/bin/scancel", "--jobname", "run_{}".format(run_id)])
   stop_time = time.time()
 

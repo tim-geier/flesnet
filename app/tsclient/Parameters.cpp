@@ -44,8 +44,13 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("benchmark,b", po::value<bool>(&benchmark_)->implicit_value(true),
            "run benchmark test only");
   desc_add("verbose,v", po::value<size_t>(&verbosity_), "set output verbosity");
+  desc_add("histograms", po::value<bool>(&histograms_)->implicit_value(true),
+           "enable microslice histogram data output");
   desc_add("shm-identifier,s", po::value<std::string>(&shm_identifier_),
            "shared memory identifier used for receiving timeslices");
+  desc_add("multi-input,m",
+           po::value<bool>(&multi_input_)->implicit_value(true),
+           "enable/disable multi archive/stream input");
   desc_add("input-archive,i", po::value<std::string>(&input_archive_),
            "name of an input file archive to read");
   desc_add("input-archive-cycles", po::value<uint64_t>(&input_archive_cycles_),
@@ -67,6 +72,7 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("publish-hwm", po::value<uint32_t>(&publish_hwm_),
            "High-water mark for the publisher, in TS, TS drop happens if more "
            "buffered (default: 1)");
+  L_(info) << "Load option HwPublish " << publish_hwm_;
   desc_add("subscribe,S",
            po::value<std::string>(&subscribe_address_)
                ->implicit_value("tcp://localhost:5556"),
@@ -74,6 +80,7 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("subscribe-hwm", po::value<uint32_t>(&subscribe_hwm_),
            "High-water mark for the subscriber, in TS, TS drop happens if more "
            "buffered (default: 1)");
+  L_(info) << "Load option HwSubscribe " << publish_hwm_;
   desc_add("maximum-number,n", po::value<uint64_t>(&maximum_number_),
            "set the maximum number of timeslices to process (default: "
            "unlimited)");
@@ -95,11 +102,11 @@ void Parameters::parse_options(int argc, char* argv[]) {
   }
 
   logging::add_console(static_cast<severity_level>(log_level));
-  if (vm.count("log-file")) {
+  if (vm.count("log-file") != 0u) {
     L_(info) << "Logging output to " << log_file;
     logging::add_file(log_file, static_cast<severity_level>(log_level));
   }
-  if (vm.count("log-syslog")) {
+  if (vm.count("log-syslog") != 0u) {
     logging::add_syslog(logging::syslog::local0,
                         static_cast<severity_level>(log_syslog));
   }
