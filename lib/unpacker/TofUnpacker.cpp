@@ -49,7 +49,7 @@ bool TofUnpacker::load_mapping(std::string path) {
     dpb = (key >> 12);
     if (!value) {
       out_ << "WARNING: DPB 0x" << std::hex << dpb << std::dec << " ASIC "
-           << (key & 0x00000FF0) << " CH " << (key & 0x00000003)
+           << ((key & 0x00000FF0) >> 4) << " CH " << (key & 0x00000003)
            << " mapped to " << value << std::endl;
       continue;
     }

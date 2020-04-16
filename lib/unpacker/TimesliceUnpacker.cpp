@@ -16,8 +16,8 @@
 
 #define TOF_UNPACKER_OUTPUT_FILE_EXTENSION ".digi"
 #define IGNORE_OVERLAP_MICROSLICES
-// Vector reserve speedup depends on timeslice size, for small (normal size) 
-// timeslices vector growth becomes linear and programm gets slower 
+// Vector reserve speedup depends on timeslice size, for small (normal size)
+// timeslices vector growth becomes linear and programm gets slower
 // -> disabled by default
 // #define TOF_UNPACKER_VECTOR_RESERVE
 
