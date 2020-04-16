@@ -28,6 +28,7 @@ private:
   bool mapping_loaded = false;
   unsigned int errors = 0;
   unsigned int unprocessed_messages = 0;
+  unsigned int unmapped_messages = 0;
   std::vector<TofError> error_vector;
 
 public:
@@ -40,9 +41,10 @@ public:
 
   bool is_mapping_loaded() { return mapping_loaded; };
 
-  unsigned int get_errors();
-  unsigned int get_unprocessed_messages();
+  unsigned int get_errors() { return errors; };
+  unsigned int get_unprocessed_messages() { return unprocessed_messages; };
+  unsigned int get_unmapped_messages() { return unmapped_messages; };
   bool reset_error_counters();
 
-  std::vector<TofError> get_error_vector();
+  std::vector<TofError> get_error_vector() { return error_vector; };
 };

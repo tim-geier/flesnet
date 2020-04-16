@@ -54,6 +54,7 @@ private:
   std::string output_filename_;
   std::string mapping_file_;
   std::vector<CbmTofDigiExp> tof_output_DigiVector_;
+  double tof_processing_time_s = 0;
 
   size_t timeslice_count_ = 0;
   size_t timeslice_error_count_ = 0;

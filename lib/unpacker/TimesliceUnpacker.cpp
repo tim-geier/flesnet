@@ -16,6 +16,10 @@
 
 #define TOF_UNPACKER_OUTPUT_FILE_EXTENSION ".digi"
 #define IGNORE_OVERLAP_MICROSLICES
+// Vector reserve speedup depends on timeslice size, for small (normal size) 
+// timeslices vector growth becomes linear and programm gets slower 
+// -> disabled by default
+// #define TOF_UNPACKER_VECTOR_RESERVE
 
 TimesliceUnpacker::TimesliceUnpacker(uint64_t arg_output_interval,
                                      std::ostream& arg_out,
@@ -29,7 +33,6 @@ TimesliceUnpacker::TimesliceUnpacker(uint64_t arg_output_interval,
       mapping_file_(mapping_file) {
 
   tofUnpacker.load_mapping(mapping_file);
-  out_ << output_filename_ << std::endl;
 }
 
 TimesliceUnpacker::~TimesliceUnpacker() {}
@@ -40,9 +43,8 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
     out_ << "Not unpacking anything..." << std::endl;
     return false;
   }
-  unsigned long int tof_input_data_size = 0;
-  unsigned long int tof_output_data_size = 0;
-  double tof_processing_time_s = 0;
+
+  // unsigned long int tof_output_data_size = 0;
 
 #ifdef IGNORE_OVERLAP_MICROSLICES
   auto overlap_ms = ts.num_microslices(0) - ts.num_core_microslices();
@@ -56,10 +58,12 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
     return false;
   }
 
-  out_ << "Now unpacking TS " << ts.index() << std::endl;
+  // out_ << "Now unpacking TS " << ts.index() << std::endl;
 
   auto start2 = std::chrono::steady_clock::now();
 
+#ifdef TOF_UNPACKER_VECTOR_RESERVE
+  unsigned long int tof_input_data_size = 0;
   // Allocate memory for Digi objects, before inserting objects
   // speedup is huge so extra runtime for counting elements is negligible
   for (size_t c = 0; c < ts.num_components(); ++c) {
@@ -74,18 +78,18 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   // TODO:
   // calculate better vector size
   // (epoch-cycle messages and EPOCH messages are irrelevant for output)
-  tof_output_DigiVector_.reserve(tof_input_data_size / 8);
+  tof_output_DigiVector_.reserve(tof_output_DigiVector_.capacity() +
+                                 (tof_input_data_size >> 3));
+#endif
 
   for (size_t c = 0; c < ts.num_components(); ++c) {
     switch (ts.get_microslice(c, 0).desc().sys_id) {
     case 0x60: // 0x60 = Tof
     {
-
       for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
         tofUnpacker.process_microslice(ts.get_microslice(c, s),
                                        &tof_output_DigiVector_);
       }
-
       break;
     }
     case 0x90: // 0x90 = T0, uses Tof unpacker due to similar data format
@@ -94,7 +98,6 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
         tofUnpacker.process_microslice(ts.get_microslice(c, s),
                                        &tof_output_DigiVector_);
       }
-
       break;
     }
     default:
@@ -104,21 +107,21 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   }
 
   auto finish2 = std::chrono::steady_clock::now();
-  tof_processing_time_s =
+  tof_processing_time_s +=
       std::chrono::duration_cast<std::chrono::duration<double>>(finish2 -
                                                                 start2)
           .count();
 
-  out_ << "processing took " << tof_processing_time_s << " seconds"
-       << std::endl;
+  // out_ << "processing took " << tof_processing_time_s << " seconds"
+  //     << std::endl;
   // out_ << "Vector size used : " << tof_output_DigiVector_.size() << "/"
   //     << (tof_input_data_size / 8) << std::endl;
 
   // tof_output_DigiVector_.shrink_to_fit();
   // don't shrink, takes O(n) time; forever in case of 1000 TS
 
-  tof_output_data_size = tof_output_DigiVector_.size() *
-                         sizeof(decltype(tof_output_DigiVector_)::value_type);
+  // tof_output_data_size = tof_output_DigiVector_.size() *
+  //                       sizeof(decltype(tof_output_DigiVector_)::value_type);
 
   timeslice_count_++;
 
@@ -155,7 +158,11 @@ void TimesliceUnpacker::put(std::shared_ptr<const fles::Timeslice> timeslice) {
 }
 
 void TimesliceUnpacker::saveTofDigiVectorToDisk() {
+  out_ << "processing took " << tof_processing_time_s << " seconds"
+       << std::endl;
+  tof_processing_time_s = 0;
   out_ << "sorting and writing to disk..." << std::endl;
+  // tof_output_DigiVector_.shrink_to_fit();
   // Using lambda comparison makes sorting faster
   std::sort(tof_output_DigiVector_.begin(), tof_output_DigiVector_.end(),
             [](const CbmTofDigiExp& a, const CbmTofDigiExp& b) -> bool {
@@ -176,7 +183,9 @@ void TimesliceUnpacker::saveTofDigiVectorToDisk() {
   tof_output_DigiVector_.shrink_to_fit();
 
   out_ << "Errors: " << tofUnpacker.get_errors() << std::endl;
-  out_ << "Unprocessed messages; " << tofUnpacker.get_unprocessed_messages()
+  out_ << "Unprocessed (info/debug) messages: "
+       << tofUnpacker.get_unprocessed_messages() << std::endl;
+  out_ << "Unmapped messages: " << tofUnpacker.get_unmapped_messages()
        << std::endl;
 
   tofUnpacker.reset_error_counters();

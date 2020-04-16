@@ -11,22 +11,17 @@
 #define TOF_UNPACKER_USE_MISSING_EPOCH_QUIRKS_MODE
 
 // enable second output vector for all messages except EPOCH and HIT
-#define TOF_UNPACKER_PROCESS_INFO_MESSAGES
+//#define TOF_UNPACKER_PROCESS_INFO_MESSAGES
 
 TofUnpacker::TofUnpacker(std::ostream& arg_out) : out_(arg_out) {}
 
 TofUnpacker::~TofUnpacker() {}
 
-unsigned int TofUnpacker::get_errors() { return errors; }
-unsigned int TofUnpacker::get_unprocessed_messages() {
-  return unprocessed_messages;
-}
 bool TofUnpacker::reset_error_counters() {
   errors = 0;
   unprocessed_messages = 0;
   return true;
 }
-std::vector<TofError> TofUnpacker::get_error_vector() { return error_vector; }
 
 bool TofUnpacker::load_mapping(std::string path) {
 
@@ -52,6 +47,12 @@ bool TofUnpacker::load_mapping(std::string path) {
   unsigned short int dpb = 0;
   while (mappingFile >> key >> value) {
     dpb = (key >> 12);
+    if (!value) {
+      out_ << "WARNING: DPB 0x" << std::hex << dpb << std::dec << " ASIC "
+           << (key & 0x00000FF0) << " CH " << (key & 0x00000003)
+           << " mapped to " << value << std::endl;
+      continue;
+    }
     auto it = mapping.find(dpb);
     if (it == mapping.end()) {
       // DPB not found -> insert new vector
@@ -92,8 +93,7 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
     for (unsigned int i = 1;
          i < (ms_size - (ms_size % BYTES_PER_MESSAGE)) / BYTES_PER_MESSAGE;
          ++i) {
-      //	out_ << i << " " << std::hex << ms_data[i] << std::dec <<
-      // std::endl;
+
       // cast current data to message, doesn't need constructor call
       const gdpbv100::Message* mess =
           reinterpret_cast<const gdpbv100::Message*>(&ms_data[i]);
@@ -138,8 +138,10 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
             it->second[(mess->getGdpbGenChipId() << 2) |
                        mess->getGdpbHitChanId()];
 
-        if (detectorAddress == 0)
+        if (detectorAddress == 0) {
+          unmapped_messages++;
           continue; // Hit not mapped to digi
+        }
 
         digiVect->emplace_back(detectorAddress,
                                mess->getMsgFullTimeD(lastEpoch),
