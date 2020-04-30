@@ -13,6 +13,9 @@
 // enable second output vector for all messages except EPOCH and HIT
 //#define TOF_UNPACKER_PROCESS_INFO_MESSAGES
 
+// enable warning message if channel is mapped to 0
+#define TOF_UNPACKER_WARN_WRONG_MAPPING
+
 TofUnpacker::TofUnpacker(std::ostream& arg_out) : out_(arg_out) {}
 
 TofUnpacker::~TofUnpacker() {}
@@ -48,9 +51,11 @@ bool TofUnpacker::load_mapping(std::string path) {
   while (mappingFile >> key >> value) {
     dpb = (key >> 12);
     if (!value) {
+#ifdef TOF_UNPACKER_WARN_WRONG_MAPPING
       out_ << "WARNING: DPB 0x" << std::hex << dpb << std::dec << " ASIC "
            << ((key & 0x00000FF0) >> 4) << " CH " << (key & 0x00000003)
            << " mapped to " << value << std::endl;
+#endif
       continue;
     }
     auto it = mapping.find(dpb);

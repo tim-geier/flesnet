@@ -15,11 +15,11 @@
 #include <boost/serialization/vector.hpp>
 
 #define TOF_UNPACKER_OUTPUT_FILE_EXTENSION ".digi"
-#define IGNORE_OVERLAP_MICROSLICES
+#define TOF_UNPACKER_IGNORE_OVERLAP_MICROSLICES
 // Vector reserve speedup depends on timeslice size, for small (normal size)
 // timeslices vector growth becomes linear and programm gets slower
 // -> disabled by default
-// #define TOF_UNPACKER_VECTOR_RESERVE
+// #define TOF_UNPACKER_USE_VECTOR_RESERVE
 
 TimesliceUnpacker::TimesliceUnpacker(uint64_t arg_output_interval,
                                      std::ostream& arg_out,
@@ -46,7 +46,7 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   // unsigned long int tof_output_data_size = 0;
 
-#ifdef IGNORE_OVERLAP_MICROSLICES
+#ifdef TOF_UNPACKER_IGNORE_OVERLAP_MICROSLICES
   auto overlap_ms = ts.num_microslices(0) - ts.num_core_microslices();
 #else
   auto overlap_ms = 0;
@@ -62,7 +62,7 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
   auto start2 = std::chrono::steady_clock::now();
 
-#ifdef TOF_UNPACKER_VECTOR_RESERVE
+#ifdef TOF_UNPACKER_USE_VECTOR_RESERVE
   unsigned long int tof_input_data_size = 0;
   // Allocate memory for Digi objects, before inserting objects
   // speedup is huge so extra runtime for counting elements is negligible
@@ -137,11 +137,7 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
 
 std::string TimesliceUnpacker::statistics() const {
   std::stringstream s;
-  s << "timeslices unpacked: " << timeslice_count_
-    << " ( avg"
-    /*<< human_readable_count(content_bytes_) << " in " << microslice_count_*/
-    << " microslices, avg: "
-    << static_cast<double>(content_bytes_) / microslice_count_ << " bytes/ms)";
+  s << "timeslices unpacked: " << timeslice_count_;
   if (timeslice_error_count_ > 0) {
     s << " [" << timeslice_error_count_ << " errors]";
   }
@@ -160,6 +156,7 @@ void TimesliceUnpacker::put(std::shared_ptr<const fles::Timeslice> timeslice) {
 void TimesliceUnpacker::saveTofDigiVectorToDisk() {
   out_ << "processing took " << tof_processing_time_s << " seconds"
        << std::endl;
+
   tof_processing_time_s = 0;
   out_ << "sorting and writing to disk..." << std::endl;
   // tof_output_DigiVector_.shrink_to_fit();
@@ -172,21 +169,23 @@ void TimesliceUnpacker::saveTofDigiVectorToDisk() {
   std::ofstream outFile;
   std::string filename = output_filename_ + TOF_UNPACKER_OUTPUT_FILE_EXTENSION;
   outFile.open(filename);
-
-  {
+  if (outFile.is_open()) {
     boost::archive::binary_oarchive oa(outFile);
     oa& tof_output_DigiVector_;
+  } else {
+    out_ << "ERROR: Cannot write ouput file " << filename << std::endl;
   }
-
   outFile.close();
-  tof_output_DigiVector_.clear();
-  tof_output_DigiVector_.shrink_to_fit();
 
+  out_ << "Successfully generated " << tof_output_DigiVector_.size()
+       << " CbmTofDigis" << std::endl;
   out_ << "Errors: " << tofUnpacker.get_errors() << std::endl;
   out_ << "Unprocessed (info/debug) messages: "
        << tofUnpacker.get_unprocessed_messages() << std::endl;
   out_ << "Unmapped messages: " << tofUnpacker.get_unmapped_messages()
        << std::endl;
 
+  tof_output_DigiVector_.clear();
+  tof_output_DigiVector_.shrink_to_fit();
   tofUnpacker.reset_error_counters();
 }
