@@ -37,6 +37,9 @@ public:
   }
   bool process_timeslice(const fles::Timeslice& ts);
 
+  void setTofProcessing(bool value) { unpack_tof_ = value; }
+  void setT0Processing(bool value) { unpack_t0_ = value; }
+
 private:
   std::string statistics() const;
   void reset() {
@@ -48,6 +51,10 @@ private:
   std::ostream& out_;
   std::string output_prefix_;
   std::ostream* hist_;
+
+  // Enabled unpacker options
+  bool unpack_tof_ = false;
+  bool unpack_t0_ = false;
 
   // Tof Unpacker
   TofUnpacker tofUnpacker;

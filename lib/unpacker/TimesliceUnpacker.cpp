@@ -86,17 +86,21 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
     switch (ts.get_microslice(c, 0).desc().sys_id) {
     case 0x60: // 0x60 = Tof
     {
-      for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
-        tofUnpacker.process_microslice(ts.get_microslice(c, s),
-                                       &tof_output_DigiVector_);
+      if (unpack_tof_) {
+        for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
+          tofUnpacker.process_microslice(ts.get_microslice(c, s),
+                                         &tof_output_DigiVector_);
+        }
       }
       break;
     }
     case 0x90: // 0x90 = T0, uses Tof unpacker due to similar data format
     {
-      for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
-        tofUnpacker.process_microslice(ts.get_microslice(c, s),
-                                       &tof_output_DigiVector_);
+      if (unpack_t0_) {
+        for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
+          tofUnpacker.process_microslice(ts.get_microslice(c, s),
+                                         &tof_output_DigiVector_);
+        }
       }
       break;
     }

@@ -58,13 +58,15 @@ Application::Application(Parameters const& par) : par_(par) {
   }
 
   if (par_.unpack()) {
-    std::string output_prefix =
-        std::to_string(par_.client_index()) + ": ";
+    std::string output_prefix = std::to_string(par_.client_index()) + ": ";
     timeslice_unpacker_ = new TimesliceUnpacker(
         1000, status_log_.stream, output_prefix, nullptr,
         par_.tof_unpacker_output_filename(), par_.tof_unpacker_mapping());
 
     sinks_.push_back(std::unique_ptr<fles::TimesliceSink>(timeslice_unpacker_));
+
+    timeslice_unpacker_->setTofProcessing(par_.unpack_tof());
+    timeslice_unpacker_->setT0Processing(par_.unpack_t0());
   }
 
   if (par_.verbosity() > 0) {

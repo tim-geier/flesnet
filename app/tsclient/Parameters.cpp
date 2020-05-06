@@ -41,6 +41,10 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("tof-unpacker-output-filename",
            po::value<std::string>(&tof_unpacker_output_filename_),
            "output filename for TOF unpacker digi vector");
+  desc_add("unpack-tof", po::value<bool>(&unpack_tof_)->implicit_value(true),
+           "enable tof unpacking");
+  desc_add("unpack-t0", po::value<bool>(&unpack_t0_)->implicit_value(true),
+           "enable t0 unpacking");
   desc_add("benchmark,b", po::value<bool>(&benchmark_)->implicit_value(true),
            "run benchmark test only");
   desc_add("verbose,v", po::value<size_t>(&verbosity_), "set output verbosity");
@@ -138,5 +142,14 @@ void Parameters::parse_options(int argc, char* argv[]) {
     if (std::string::npos != period_idx) {
       tof_unpacker_output_filename_.erase(period_idx);
     }
+  }
+
+  size_t enabled_unpacker_count =
+      vm.count("unpack-tof") + vm.count("unpack-t0");
+  if (vm.count("unpack") && enabled_unpacker_count < 1) {
+    L_(info) << "Unpacker enabled but 0 detectors selected, now unpacking all "
+                "detectors";
+    unpack_tof_ = true;
+    unpack_t0_ = true;
   }
 }

@@ -47,6 +47,10 @@ public:
 
   std::string tof_unpacker_mapping() const { return tof_unpacker_mapping_; }
 
+  bool unpack_tof() const { return unpack_tof_; }
+
+  bool unpack_t0() const { return unpack_t0_; }
+
   bool benchmark() const { return benchmark_; }
 
   size_t verbosity() const { return verbosity_; }
@@ -80,6 +84,8 @@ private:
   bool unpack_ = false;
   std::string tof_unpacker_output_filename_;
   std::string tof_unpacker_mapping_;
+  bool unpack_tof_ = false;
+  bool unpack_t0_ = false;
   bool benchmark_ = false;
   size_t verbosity_ = 0;
   bool histograms_ = false;
