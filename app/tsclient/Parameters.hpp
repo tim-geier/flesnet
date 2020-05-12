@@ -51,6 +51,8 @@ public:
 
   bool unpack_t0() const { return unpack_t0_; }
 
+  bool tof_unpacker_merge_output() const { return tof_unpacker_merge_output_; }
+
   bool benchmark() const { return benchmark_; }
 
   size_t verbosity() const { return verbosity_; }
@@ -84,6 +86,7 @@ private:
   bool unpack_ = false;
   std::string tof_unpacker_output_filename_;
   std::string tof_unpacker_mapping_;
+  bool tof_unpacker_merge_output_ = false;
   bool unpack_tof_ = false;
   bool unpack_t0_ = false;
   bool benchmark_ = false;

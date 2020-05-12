@@ -41,6 +41,9 @@ void Parameters::parse_options(int argc, char* argv[]) {
   desc_add("tof-unpacker-output-filename",
            po::value<std::string>(&tof_unpacker_output_filename_),
            "output filename for TOF unpacker digi vector");
+  desc_add("tof-unpacker-merge-output",
+           po::value<bool>(&tof_unpacker_merge_output_)->implicit_value(true),
+           "merge output in one single .digi file");
   desc_add("unpack-tof", po::value<bool>(&unpack_tof_)->implicit_value(true),
            "enable tof unpacking");
   desc_add("unpack-t0", po::value<bool>(&unpack_t0_)->implicit_value(true),

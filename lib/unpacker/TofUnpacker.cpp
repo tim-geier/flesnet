@@ -23,6 +23,7 @@ TofUnpacker::~TofUnpacker() {}
 bool TofUnpacker::reset_error_counters() {
   errors = 0;
   unprocessed_messages = 0;
+  unmapped_messages = 0;
   return true;
 }
 

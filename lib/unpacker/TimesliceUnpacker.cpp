@@ -24,18 +24,22 @@
 TimesliceUnpacker::TimesliceUnpacker(uint64_t arg_output_interval,
                                      std::ostream& arg_out,
                                      std::string arg_output_prefix,
-                                     std::ostream* arg_hist,
-                                     std::string output_filename,
-                                     std::string mapping_file)
+                                     std::ostream* arg_hist)
     : output_interval_(arg_output_interval), out_(arg_out),
       output_prefix_(std::move(arg_output_prefix)), hist_(arg_hist),
-      tofUnpacker(arg_out), output_filename_(output_filename),
-      mapping_file_(mapping_file) {
+      tofUnpacker(arg_out) {}
 
+TimesliceUnpacker::~TimesliceUnpacker() {}
+
+void TimesliceUnpacker::set_tof_unpacker_mapping_file(
+    std::string mapping_file) {
   tofUnpacker.load_mapping(mapping_file);
 }
 
-TimesliceUnpacker::~TimesliceUnpacker() {}
+void TimesliceUnpacker::set_tof_unpacker_output_filename(
+    std::string tof_output_filename) {
+  tof_output_filename_ = tof_output_filename;
+}
 
 bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   if (!tofUnpacker.is_mapping_loaded()) {
@@ -171,7 +175,8 @@ void TimesliceUnpacker::saveTofDigiVectorToDisk() {
             });
 
   std::ofstream outFile;
-  std::string filename = output_filename_ + TOF_UNPACKER_OUTPUT_FILE_EXTENSION;
+  std::string filename =
+      tof_output_filename_ + TOF_UNPACKER_OUTPUT_FILE_EXTENSION;
   outFile.open(filename);
   if (outFile.is_open()) {
     boost::archive::binary_oarchive oa(outFile);

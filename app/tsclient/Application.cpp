@@ -59,12 +59,15 @@ Application::Application(Parameters const& par) : par_(par) {
 
   if (par_.unpack()) {
     std::string output_prefix = std::to_string(par_.client_index()) + ": ";
-    timeslice_unpacker_ = new TimesliceUnpacker(
-        1000, status_log_.stream, output_prefix, nullptr,
-        par_.tof_unpacker_output_filename(), par_.tof_unpacker_mapping());
+    timeslice_unpacker_ =
+        new TimesliceUnpacker(1000, status_log_.stream, output_prefix, nullptr);
 
     sinks_.push_back(std::unique_ptr<fles::TimesliceSink>(timeslice_unpacker_));
 
+    timeslice_unpacker_->set_tof_unpacker_mapping_file(
+        par_.tof_unpacker_mapping());
+    timeslice_unpacker_->set_tof_unpacker_output_filename(
+        par_.tof_unpacker_output_filename());
     timeslice_unpacker_->setTofProcessing(par_.unpack_tof());
     timeslice_unpacker_->setT0Processing(par_.unpack_t0());
   }
@@ -143,11 +146,19 @@ void Application::run() {
     for (auto& sink : sinks_) {
       sink->put(ts);
     }
+    if (!par_.tof_unpacker_merge_output()) {
+      std::stringstream ss;
+      ss << par_.tof_unpacker_output_filename() << "_ts" << ts->index();
+      timeslice_unpacker_->set_tof_unpacker_output_filename(ss.str());
+      timeslice_unpacker_->saveTofDigiVectorToDisk();
+    }
     ++count_;
     if (count_ == limit) {
       break;
     }
   }
 
-  timeslice_unpacker_->saveTofDigiVectorToDisk();
+  if (par_.tof_unpacker_merge_output()) {
+    timeslice_unpacker_->saveTofDigiVectorToDisk();
+  }
 }
