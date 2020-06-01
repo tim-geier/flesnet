@@ -43,10 +43,6 @@ public:
 
 private:
   std::string statistics() const;
-  void reset() {
-    microslice_count_ = 0;
-    content_bytes_ = 0;
-  }
 
   uint64_t output_interval_ = UINT64_MAX;
   std::ostream& out_;
@@ -58,13 +54,11 @@ private:
   bool unpack_t0_ = false;
 
   // Tof Unpacker
-  TofUnpacker tofUnpacker;
+  TofUnpacker tofUnpacker_;
   std::string tof_output_filename_;
   std::vector<CbmTofDigiExp> tof_output_DigiVector_;
-  double tof_processing_time_s = 0;
+  double tof_processing_time_s_ = 0;
 
   size_t timeslice_count_ = 0;
   size_t timeslice_error_count_ = 0;
-  size_t microslice_count_ = 0;
-  size_t content_bytes_ = 0;
 };

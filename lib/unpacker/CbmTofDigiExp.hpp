@@ -1,6 +1,8 @@
 /** CbmTofDigiExp.h
  ** @author Pierre-Alain Loizeau <loizeau@physi.uni-heidelberg.de>
  ** @date 07.06.2013
+ ** Updated field sizes for unpacker prototype
+ ** Tim Geier - 10.03.2020
  **/
 
 /** @class CbmTofDigiExp
@@ -8,10 +10,10 @@
  ** @brief Data level: TDC CALIB
  ** @version 1.0
  **
- ** The information is encoded into 3*4 bytes (2 double + 1 unsigned int).
- ** Unique Address:                32 bits following CbmTofAddress
- ** Calibrated Time [ps]:          32 bits double
- ** Calibrated Tot  [ps]:          32 bits double
+ ** The information is encoded into 14 bytes:
+ ** Unique Address:                32 bits following CbmTofAddress (uint)
+ ** Calibrated Time [ps]:          64 bits double
+ ** Calibrated Tot  [ps]:          16 bits unsigned short int
  **
  ** In triggered setup, the time is relative to the trigger time, which
  ** is measured with a resolution of a few ns corresponding to the TDC

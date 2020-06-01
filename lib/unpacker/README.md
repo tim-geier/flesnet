@@ -34,3 +34,9 @@ If none of the following options is present, all supported detectors will be pro
 |-------------------|--------------------------------------|
 | --unpack-tof      | Enable TOF unpacking (SYS-ID 0x60)   |
 | --unpack-t0       | Enable T0 unpacking (SYS-ID 0x90)    |
+
+## Known problems
+
+ - Overflowing epoch within microslice should increase epoch-cycle -- not implemented yet
+ - Data with epoch = 0 will be ignored if no following epoch is found or TOF_UNPACKER_USE_MISSING_EPOCH_QUIRKS_MODE is disabled. Maybe use 0xffffffff (valid epoch can be 31 bits max) for unknown epoch
+ 

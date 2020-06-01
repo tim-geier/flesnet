@@ -21,9 +21,9 @@ TofUnpacker::TofUnpacker(std::ostream& arg_out) : out_(arg_out) {}
 TofUnpacker::~TofUnpacker() {}
 
 bool TofUnpacker::reset_error_counters() {
-  errors = 0;
-  unprocessed_messages = 0;
-  unmapped_messages = 0;
+  errors_ = 0;
+  unprocessed_messages_ = 0;
+  unmapped_messages_ = 0;
   return true;
 }
 
@@ -42,11 +42,11 @@ bool TofUnpacker::load_mapping(std::string path) {
   mappingFile.open(path);
   if (!mappingFile.good()) // File not found or not accessible
   {
-    mapping_loaded = false;
     return false;
   }
 
-  mapping.clear();
+  mapping_.clear();
+  mapping_loaded_ = false;
   unsigned int key, value;
   unsigned short int dpb = 0;
   while (mappingFile >> key >> value) {
@@ -59,21 +59,21 @@ bool TofUnpacker::load_mapping(std::string path) {
 #endif
       continue;
     }
-    auto it = mapping.find(dpb);
-    if (it == mapping.end()) {
+    auto it = mapping_.find(dpb);
+    if (it == mapping_.end()) {
       // DPB not found -> insert new vector
       std::vector<unsigned int> vect;
       vect.resize(1024); // 2^12
       vect[((key & 0x00000FF0) >> 2) | (key & 0x00000003)] = value;
-      mapping[dpb] = vect;
+      mapping_[dpb] = vect;
     } else {
-      mapping[dpb][((key & 0x00000FF0) >> 2) | (key & 0x00000003)] = value;
+      mapping_[dpb][((key & 0x00000FF0) >> 2) | (key & 0x00000003)] = value;
     }
   }
 
   mappingFile.close();
   out_ << "Finished reading mapping." << std::endl;
-  mapping_loaded = true;
+  mapping_loaded_ = true;
   return true;
 }
 
@@ -86,8 +86,8 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
   unsigned long long int current_epoch_cycle;
   unsigned long long int lastEpoch = 0;
 
-  auto it = mapping.find(ms.desc().eq_id);
-  if (unlikely(it == mapping.end())) {
+  auto it = mapping_.find(ms.desc().eq_id);
+  if (unlikely(it == mapping_.end())) {
     // DPB not found, something wrong with configuration...
     return;
   } else {
@@ -129,13 +129,13 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
           if (lastEpoch == 0) {
             // No Epoch in microslice
             // Ignore current message and continue...
-            errors++;
+            errors_++;
             break;
           }
 #else
           // Missing Epoch information at start of microslice
           // Ignore current message and continue...
-          errors++;
+          errors_++;
           break;
 #endif
         }
@@ -145,7 +145,7 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
                        mess->getGdpbHitChanId()];
 
         if (detectorAddress == 0) {
-          unmapped_messages++;
+          unmapped_messages_++;
           continue; // Hit not mapped to digi
         }
 
@@ -171,25 +171,25 @@ void TofUnpacker::process_microslice(fles::MicrosliceView ms,
             const gdpbv100::Message* tempMessage =
                 reinterpret_cast<const gdpbv100::Message*>(&ms_data[j]);
             if (tempMessage->isEpochMsg()) {
-              error_vector.emplace_back(
+              error_vector_.emplace_back(
                   (gdpbv100::kdEpochInNs * static_cast<double>(lastEpoch)),
                   mess);
               break; // No detailed Time information in current epoch
             }
             if (tempMessage->isHitMsg()) {
               if (mess->getGdpbGenChipId() == tempMessage->getGdpbGenChipId()) {
-                error_vector.emplace_back(
+                error_vector_.emplace_back(
                     tempMessage->getMsgFullTimeD(lastEpoch), mess);
                 break;
               }
             }
           }
         } else { // message without ASIC info -> just EPOCH
-          error_vector.emplace_back(
+          error_vector_.emplace_back(
               (gdpbv100::kdEpochInNs * static_cast<double>(lastEpoch)), mess);
         }
 #else
-        unprocessed_messages++;
+        unprocessed_messages_++;
 #endif
         break;
       }

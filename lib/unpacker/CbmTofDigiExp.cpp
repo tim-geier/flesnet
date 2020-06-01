@@ -1,6 +1,8 @@
 /** @file CbmTofDigiExp.cxx
  ** @author Pierre-Alain Loizeau <loizeau@physi.uni-heidelberg.de>
  ** @date 07.06.2013
+ ** Updated field sizes for unpacker prototype
+ ** Tim Geier - 10.03.2020
  **
  ** Code for Data class for expanded digital TOF information
  **/
