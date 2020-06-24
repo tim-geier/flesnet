@@ -1,0 +1,52 @@
+// GetMapping function to extract channel mapping from existing CbmRoot
+// unpacker code.
+// Should be called at the end of CbmMcbm2018UnpackerAlgoTof::InitParameters()
+// Does NOT WORK correctly for T0 because of missing system parameters during
+// runtime!
+
+void CbmMcbm2018UnpackerAlgoTof::GetMapping() {
+  fDigiVect.clear(); // Clear output vector
+  std::ofstream mappingFile;
+  mappingFile.open("mapping.par");
+
+  // Loop over all known DPBs
+  for (fuCurrDpbIdx = 0; fuCurrDpbIdx < fuNrOfGdpbs; fuCurrDpbIdx++) {
+    // Loop over all possible ASIC Indexes
+    for (unsigned int asicId = 0; asicId < fuNrOfGet4PerGdpb; asicId++) {
+      // Set global variable fuGet4Id. This is only correct for TOF!
+      // for T0 it should be fuGet4Id = asicId;
+      // Currently it's not possible to detect if the current DPB or ASIC
+      // corresponds to TOF or T0. Normally this information is encoded in
+      // the microslice header and isn't part of the parameters at the moment.
+      fuGet4Id = fUnpackPar->ElinkIdxToGet4Idx(asicId);
+      
+      // Loop over all possible channels
+      for (unsigned int channel = 0; channel < 4; channel++) {
+        gdpbv100::FullMessage newMsg;
+        newMsg.setField(32, 2, channel);
+
+        fDigiVect.clear();
+        ProcessHit(newMsg);
+        // if digi vector is empty the current channel is not mapped
+        // and will be ignored
+        if (!fDigiVect.empty()) {
+          
+          CbmTofDigiExp digi = fDigiVect.back();
+
+          // Pack DPB + ASIC + Channel in 32Bit uInt - Format:
+          // DPB      00001111111111111111000000000000
+          // ASIC     00000000000000000000111111110000
+          // Channel  00000000000000000000000000001111 --> could be 2 Bit
+
+          unsigned int detectorAddress =
+              (fUnpackPar->GetGdpbId(fuCurrDpbIdx) << 12) + (asicId << 4) +
+              channel;
+
+          mappingFile << detectorAddress << " " << digi.GetAddress()
+                      << std::endl;
+        }
+      }
+    }
+  }
+  mappingFile.close();
+}
