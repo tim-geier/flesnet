@@ -19,7 +19,7 @@ void CbmMcbm2018UnpackerAlgoTof::GetMapping() {
       // corresponds to TOF or T0. Normally this information is encoded in
       // the microslice header and isn't part of the parameters at the moment.
       fuGet4Id = fUnpackPar->ElinkIdxToGet4Idx(asicId);
-      
+
       // Loop over all possible channels
       for (unsigned int channel = 0; channel < 4; channel++) {
         gdpbv100::FullMessage newMsg;
@@ -30,7 +30,7 @@ void CbmMcbm2018UnpackerAlgoTof::GetMapping() {
         // if digi vector is empty the current channel is not mapped
         // and will be ignored
         if (!fDigiVect.empty()) {
-          
+
           CbmTofDigiExp digi = fDigiVect.back();
 
           // Pack DPB + ASIC + Channel in 32Bit uInt - Format:
