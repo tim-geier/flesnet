@@ -71,8 +71,10 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
   // Allocate memory for Digi objects, before inserting objects
   // speedup is huge so extra runtime for counting elements is negligible
   for (size_t c = 0; c < ts.num_components(); ++c) {
-    if (!(ts.get_microslice(c, 0).desc().sys_id == static_cast<int>(fles::SubsystemIdentifier::RPC) ||
-          ts.get_microslice(c, 0).desc().sys_id == static_cast<int>(fles::SubsystemIdentifier::T0)))
+    if (!(ts.get_microslice(c, 0).desc().sys_id ==
+              static_cast<int>(fles::SubsystemIdentifier::RPC) ||
+          ts.get_microslice(c, 0).desc().sys_id ==
+              static_cast<int>(fles::SubsystemIdentifier::T0)))
       continue; // Ignore everything not TOF
     for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
       tof_input_data_size += ts.get_microslice(c, s).desc().size;
@@ -98,7 +100,9 @@ bool TimesliceUnpacker::process_timeslice(const fles::Timeslice& ts) {
       }
       break;
     }
-    case static_cast<int>(fles::SubsystemIdentifier::T0): // 0x90 = T0, uses Tof unpacker due to similar data format
+    case static_cast<int>(
+        fles::SubsystemIdentifier::T0): // 0x90 = T0, uses Tof unpacker due to
+                                        // similar data format
     {
       if (unpack_t0_) {
         for (size_t s = 0; s < ts.num_microslices(c) - overlap_ms; ++s) {
